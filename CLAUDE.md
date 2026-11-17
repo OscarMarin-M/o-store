@@ -7,7 +7,7 @@ Plataforma multitienda: un administrador desde el que se crean y gestionan tiend
 - Responder en español.
 - Modo learning: al crear o cambiar algo, explicar en una o dos frases qué es y por qué, sin frenar el avance. Oscar tiene algo de experiencia en desarrollo web.
 - Ahorro de tokens: seguir la skill `token-saver`.
-- Antes de crear o rediseñar interfaz: seguir la skill `ui-design`.
+- Antes de crear o rediseñar interfaz: cargar las skills `ui-design` (encargo de Oscar) y `frontend-design` (método, oficial de Anthropic). Modo oscuro por defecto.
 - Al terminar la sesión o tras un push a `main`: ejecutar la skill `session-close`.
 - Pedir confirmación antes de acciones externas (push, crear repos, tocar el proyecto Supabase).
 
@@ -58,8 +58,8 @@ Roles: `super_admin`, `store_owner`, `store_staff` (en `platform.memberships`) y
 
 ## Estado
 
-- Fase 0: monorepo creado, `admin` y `api` compilan. Pendiente: repositorio en GitHub y proyecto Supabase de desarrollo.
-- Fase 0.5: `CLAUDE.md`, skills y hook de cierre creados; `ui-design` espera las referencias visuales de Oscar.
+- Fase 0: monorepo creado, `admin` y `api` compilan. Remoto `origin` = https://github.com/OscarMarin-M/o-store.git. Claude no puede hacer push desde su shell (git sin gestor de credenciales): los push los hace Oscar desde su terminal. Proyecto Supabase creado; falta que Oscar complete `.env` a partir de `.env.example`.
+- Fase 0.5: `CLAUDE.md`, skills y hook de cierre creados. Los planes de tokens visuales (admin y cada tienda) se definen al empezar su interfaz y se anotan en `ui-design`.
 - Fase 1 (API base) y Fase 2 (administrador): sin empezar.
 
 Plan completo: `C:\Users\oscar\.claude\plans\hola-quiero-iniciar-un-refactored-pancake.md`.
