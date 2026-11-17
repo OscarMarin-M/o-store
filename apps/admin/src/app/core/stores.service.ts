@@ -1,6 +1,12 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
-import type { CreateStoreInput, StoreDto } from '@o-stores/contracts';
+import type {
+  CreateStoreInput,
+  LogoUploadDto,
+  LogoUploadInput,
+  StoreDto,
+  UpdateStoreInput,
+} from '@o-stores/contracts';
 import { firstValueFrom } from 'rxjs';
 
 /** Tiendas visibles para el usuario y cuál se está editando. */
@@ -39,6 +45,21 @@ export class StoresService {
       this.http.put<StoreDto>(`/api/stores/${id}/enabled`, { enabled }),
     );
     this.replace(store);
+  }
+
+  async update(id: string, input: UpdateStoreInput): Promise<StoreDto> {
+    const store = await firstValueFrom(
+      this.http.patch<StoreDto>(`/api/stores/${id}`, input),
+    );
+    this.replace(store);
+    return store;
+  }
+
+  /** Pide a la API una URL firmada para subir el logo directo a Storage. */
+  requestLogoUpload(id: string, extension: LogoUploadInput['extension']): Promise<LogoUploadDto> {
+    return firstValueFrom(
+      this.http.post<LogoUploadDto>(`/api/stores/${id}/logo-upload`, { extension }),
+    );
   }
 
   private replace(store: StoreDto): void {

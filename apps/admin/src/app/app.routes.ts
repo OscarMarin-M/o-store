@@ -8,6 +8,17 @@ import {
 } from './core/guards';
 import { STORE_SECTIONS } from './store/store-sections';
 
+type Loader = NonNullable<Route['loadComponent']>;
+
+const pendingSection: Loader = () =>
+  import('./store/pending-section').then((m) => m.PendingSection);
+
+/** Secciones de tienda ya construidas; las demás muestran el aviso de pendiente. */
+const SECTION_PAGES: Record<string, Loader> = {
+  apariencia: () =>
+    import('./store/appearance/appearance-page').then((m) => m.AppearancePage),
+};
+
 export const appRoutes: Route[] = [
   {
     path: 'entrar',
@@ -46,8 +57,7 @@ export const appRoutes: Route[] = [
               title: section.label,
               canActivate: [storeRoleGuard(section.roles)],
               data: { title: section.label },
-              loadComponent: () =>
-                import('./store/pending-section').then((m) => m.PendingSection),
+              loadComponent: SECTION_PAGES[section.path] ?? pendingSection,
             }),
           ),
         ],

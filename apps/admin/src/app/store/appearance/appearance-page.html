@@ -1,0 +1,136 @@
+@if (store(); as store) {
+  <header class="os-page-header">
+    <h1>Logo y colores</h1>
+    <div class="actions">
+      @if (dirty()) {
+        <button mat-button type="button" (click)="reset()">Descartar cambios</button>
+      }
+      <button
+        mat-flat-button
+        class="os-primary"
+        type="button"
+        [disabled]="!dirty() || saving() || logo()?.state === 'uploading'"
+        (click)="save()"
+      >
+        {{ saving() ? 'Guardando…' : 'Guardar cambios' }}
+      </button>
+    </div>
+  </header>
+
+  @if (message(); as m) {
+    <p [class]="m.kind === 'ok' ? 'saved' : 'os-error'" role="status">{{ m.text }}</p>
+  }
+
+  <div class="layout">
+    <div class="editor">
+      <section class="os-panel block" aria-labelledby="logo-title">
+        <h2 id="logo-title">Logo</h2>
+        <label
+          class="drop"
+          [class.dragging]="dragging()"
+          (dragover)="$event.preventDefault(); dragging.set(true)"
+          (dragleave)="dragging.set(false)"
+          (drop)="onDrop($event)"
+        >
+          <input type="file" accept="image/png,image/jpeg,image/webp" (change)="onPick($event)" />
+          <span class="drop-main">Arrastra el logo aquí, pégalo o <u>elige un archivo</u></span>
+          <span class="os-muted">PNG, JPG o WebP, hasta 2 MB. Mejor con fondo transparente.</span>
+        </label>
+
+        @if (logoError(); as error) {
+          <p class="os-error" role="alert">{{ error }}</p>
+        }
+
+        @if (logo(); as l) {
+          <div class="file" [attr.aria-busy]="l.state === 'uploading'">
+            <img [src]="l.previewUrl" alt="" />
+            <div class="file-info">
+              <span class="file-name">{{ l.file.name }}</span>
+              @switch (l.state) {
+                @case ('uploading') {
+                  <progress [value]="l.progress" max="1" [attr.aria-label]="'Subiendo ' + l.file.name"></progress>
+                }
+                @case ('done') {
+                  <span class="os-muted">Listo. Se aplicará al guardar.</span>
+                }
+                @case ('error') {
+                  <span class="os-error">La subida falló. Revisa tu conexión y reintenta.</span>
+                }
+              }
+            </div>
+            @switch (l.state) {
+              @case ('uploading') {
+                <button mat-button type="button" (click)="cancelUpload()">Cancelar</button>
+              }
+              @case ('error') {
+                <button mat-button type="button" (click)="retryUpload()">Reintentar</button>
+              }
+              @default {
+                <button mat-button type="button" (click)="discardLogo()">Quitar</button>
+              }
+            }
+          </div>
+        }
+      </section>
+
+      <section class="os-panel block" aria-labelledby="colors-title">
+        <h2 id="colors-title">Colores</h2>
+        @for (field of colorFields; track field.key) {
+          <div class="color">
+            <input
+              type="color"
+              [id]="'picker-' + field.key"
+              [value]="colors()[field.key]"
+              (input)="setColor(field.key, $any($event.target).value)"
+              [attr.aria-label]="'Elegir color ' + field.label"
+            />
+            <label class="color-label" [for]="'hex-' + field.key">
+              {{ field.label }}
+              <span class="os-muted">{{ field.hint }}</span>
+            </label>
+            <input
+              class="hex os-mono"
+              [id]="'hex-' + field.key"
+              [value]="colors()[field.key]"
+              maxlength="7"
+              spellcheck="false"
+              (change)="setColor(field.key, $any($event.target).value)"
+            />
+            @if (hexErrors()[field.key]; as error) {
+              <p class="os-error color-error">{{ error }}</p>
+            }
+          </div>
+        }
+      </section>
+    </div>
+
+    <section class="preview-col" aria-labelledby="preview-title">
+      <h2 id="preview-title">Así se verá</h2>
+      <div
+        class="preview"
+        [style.--p]="colors().colorPrimary"
+        [style.--a]="colors().colorAccent"
+        [style.--bg]="colors().colorBackground"
+        [style.--on-p]="textOnPrimary()"
+        [style.--on-bg]="textOnBackground()"
+      >
+        <div class="preview-bar">
+          @if (logoPreview(); as src) {
+            <img [src]="src" [alt]="'Logo de ' + store.name" />
+          } @else {
+            <span class="preview-name">{{ store.name }}</span>
+          }
+        </div>
+        <div class="preview-body">
+          <span class="preview-tag">Nuevo</span>
+          <p class="preview-title">Producto de ejemplo</p>
+          <p class="preview-price">$12.990</p>
+          <span class="preview-button">Añadir al carrito</span>
+        </div>
+      </div>
+      @for (warning of warnings(); track warning) {
+        <p class="warning">{{ warning }}</p>
+      }
+    </section>
+  </div>
+}
