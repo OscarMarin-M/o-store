@@ -161,6 +161,12 @@ export interface PublicStoreDto {
   id: string;
   slug: string;
   name: string;
+  /**
+   * Dirección canónica: el dominio propio principal (verificado) o, si no hay,
+   * el subdominio de la plataforma. Si el host pedido es otro, la tienda
+   * redirige aquí con un 301.
+   */
+  primaryDomain: string;
   modules: string[];
   logoUrl: string | null;
   colorPrimary: string;

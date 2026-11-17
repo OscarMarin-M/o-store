@@ -373,10 +373,19 @@ export class StoresService {
               .executeTakeFirst()
           : undefined));
     if (!row) throw new NotFoundException('Tienda no encontrada');
+    const primary = await this.db
+      .selectFrom('platform.storeDomains')
+      .select('domain')
+      .where('storeId', '=', row.id)
+      .where('isPrimary', '=', true)
+      .where('verified', '=', true)
+      .executeTakeFirst();
     return {
       id: row.id,
       slug: row.slug,
       name: row.name,
+      primaryDomain:
+        primary?.domain ?? `${row.slug}.${this.config.platformDomain}`,
       modules: row.modules,
       logoUrl: this.config.publicAssetUrl(row.logoPath),
       colorPrimary: row.colorPrimary,
