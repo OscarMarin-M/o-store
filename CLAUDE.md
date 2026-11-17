@@ -54,12 +54,13 @@ Roles: `super_admin`, `store_owner`, `store_staff` (en `platform.memberships`) y
 - La carpeta está dentro de OneDrive. Si `npm install` falla por archivos bloqueados, pausar OneDrive y reintentar.
 - nvm-windows 1.1.10 no puede descargar versiones nuevas de Node; se instalan copiando el zip oficial a `%APPDATA%\nvm\v<versión>`.
 - npm 11 no ejecuta scripts de instalación de dependencias sin aprobarlos (`npm install-scripts`); hasta ahora no ha hecho falta.
+- Git no traía gestor de credenciales configurado; este repo usa `credential.helper=manager` (config local), con lo que Claude puede hacer push desde su shell. Sigue pidiendo confirmación antes.
 - Secretos en `.env` (ignorado por git). Nunca escribir claves en archivos versionados.
 
 ## Estado
 
-- Fase 0: monorepo creado, `admin` y `api` compilan. Remoto `origin` = https://github.com/OscarMarin-M/o-store.git. Claude no puede hacer push desde su shell (git sin gestor de credenciales): los push los hace Oscar desde su terminal. Proyecto Supabase creado; falta que Oscar complete `.env` a partir de `.env.example`.
+- Fase 0: monorepo creado, `admin` y `api` compilan. Remoto `origin` = https://github.com/OscarMarin-M/o-store.git. `main` subido y con seguimiento de `origin/main`. Proyecto Supabase creado y `.env` completo.
 - Fase 0.5: `CLAUDE.md`, skills y hook de cierre creados. Los planes de tokens visuales (admin y cada tienda) se definen al empezar su interfaz y se anotan en `ui-design`.
-- Fase 1 (API base) y Fase 2 (administrador): sin empezar.
+- Fase 1 (API base): sin empezar, ya desbloqueada; es lo siguiente. Fase 2 (administrador): sin empezar.
 
 Plan completo: `C:\Users\oscar\.claude\plans\hola-quiero-iniciar-un-refactored-pancake.md`.
