@@ -24,7 +24,9 @@ Plataforma multitienda: un administrador desde el que se crean y gestionan tiend
 - `npx nx serve admin` — admin en http://localhost:4200 (proxy de `/api` hacia la API).
 - `npx nx serve api` — API en http://localhost:3000/api.
 - `npx nx run-many -t build` — compilar todo.
-- `npx nx test admin` — pruebas del admin.
+- `npx nx test admin` / `npx nx test api` — pruebas (Vitest).
+- `npx nx migrate api` — compila y aplica migraciones pendientes a `platform` y a cada tienda (toca Supabase: pedir confirmación).
+- `node dist/apps/api/main.js --grant-super-admin <correo>` — da `super_admin` a una cuenta ya creada en Supabase Auth.
 - `npx nx g @nx/angular:library --directory=libs/<ruta>` — nueva librería.
 
 ## Arquitectura acordada
@@ -55,12 +57,24 @@ Roles: `super_admin`, `store_owner`, `store_staff` (en `platform.memberships`) y
 - nvm-windows 1.1.10 no puede descargar versiones nuevas de Node; se instalan copiando el zip oficial a `%APPDATA%\nvm\v<versión>`.
 - npm 11 no ejecuta scripts de instalación de dependencias sin aprobarlos (`npm install-scripts`); hasta ahora no ha hecho falta.
 - Git no traía gestor de credenciales configurado; este repo usa `credential.helper=manager` (config local), con lo que Claude puede hacer push desde su shell. Sigue pidiendo confirmación antes.
+- `DATABASE_URL` debe ser la del Session pooler (`...pooler.supabase.com`, usuario `postgres.<ref>`); la conexión directa `db.<ref>.supabase.co` es solo IPv6 y no resuelve desde este equipo.
+- Oscar prefiere ejecutar él mismo en el SQL Editor los cambios de estructura sobre `platform`: pasarle el SQL (incluyendo el registro en `platform.schema_migrations`).
 - Secretos en `.env` (ignorado por git). Nunca escribir claves en archivos versionados.
 
 ## Estado
 
 - Fase 0: monorepo creado, `admin` y `api` compilan. Remoto `origin` = https://github.com/OscarMarin-M/o-store.git. `main` subido y con seguimiento de `origin/main`. Proyecto Supabase creado y `.env` completo.
 - Fase 0.5: `CLAUDE.md`, skills y hook de cierre creados. Los planes de tokens visuales (admin y cada tienda) se definen al empezar su interfaz y se anotan en `ui-design`.
-- Fase 1 (API base): sin empezar, ya desbloqueada; es lo siguiente. Fase 2 (administrador): sin empezar.
+- Fase 1 (API base): código escrito, compila, lint limpio y 16 pruebas unitarias pasan (guards y ejecutor de migraciones). Incluye `libs/shared/contracts` (zod), migraciones en `db/migrations`, guards de sesión y roles, módulos `stores` y `memberships`, y `GET /api/public/stores/resolve?host=`. Probada contra Supabase con un flujo completo (crear tiendas, tema, dominios, `resolve`, roles y 403 entre tiendas). En la base de desarrollo existen `platform`, las tiendas `tcg` y `poleras` (`tenant_tcg`, `tenant_poleras`), el dominio verificado `tcg.localhost` y el `super_admin` de Oscar. Fase 1 terminada.
+- Fase 2 (administrador): sin empezar; es lo siguiente.
+- Pendientes menores: validar el certificado de Supabase en la conexión Postgres (hoy cifra sin validar); cambiar la contraseña débil del `super_admin` de desarrollo.
+
+Decisiones de la Fase 1:
+
+- El JWT se valida con las claves públicas del proyecto (JWKS, librería `jose`). Si el proyecto firmara con secreto compartido, definir `SUPABASE_JWT_SECRET`.
+- Toda ruta exige sesión salvo las marcadas `@Public()`. `@Roles(...)` compara contra el parámetro `:storeId`; `super_admin` pasa siempre.
+- El logo se sube con una URL firmada que emite la API (`POST /stores/:storeId/logo-upload`); no hay políticas de Storage para usuarios.
+- `resolve` solo devuelve tiendas habilitadas con dominio `verified`; solo un `super_admin` puede marcar un dominio como verificado.
+- La API usa TypeScript `strict` (Kysely lo necesita).
 
 Plan completo: `C:\Users\oscar\.claude\plans\hola-quiero-iniciar-un-refactored-pancake.md`.

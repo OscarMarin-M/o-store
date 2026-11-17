@@ -1,12 +1,12 @@
 import { Controller, Get } from '@nestjs/common';
-import { AppService } from './app.service';
+import { Public } from '../auth/decorators';
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
-
-  @Get()
-  getData() {
-    return this.appService.getData();
+  /** Para comprobar que la API está arriba; no toca la base de datos. */
+  @Public()
+  @Get('health')
+  health() {
+    return { status: 'ok' };
   }
 }
