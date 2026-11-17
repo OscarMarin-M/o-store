@@ -67,7 +67,8 @@ Roles: `super_admin`, `store_owner`, `store_staff` (en `platform.memberships`) y
 - Fase 0.5: `CLAUDE.md`, skills y hook de cierre creados. Los planes de tokens visuales (admin y cada tienda) se definen al empezar su interfaz y se anotan en `ui-design`.
 - Fase 1 (API base): código escrito, compila, lint limpio y 16 pruebas unitarias pasan (guards y ejecutor de migraciones). Incluye `libs/shared/contracts` (zod), migraciones en `db/migrations`, guards de sesión y roles, módulos `stores` y `memberships`, y `GET /api/public/stores/resolve?host=`. Probada contra Supabase con un flujo completo (crear tiendas, tema, dominios, `resolve`, roles y 403 entre tiendas). En la base de desarrollo existen `platform`, las tiendas `tcg` y `poleras` (`tenant_tcg`, `tenant_poleras`), el dominio verificado `tcg.localhost` y el `super_admin` de Oscar. Fase 1 terminada.
 - Fase 2 (administrador): sin empezar; es lo siguiente.
-- Pendientes menores: validar el certificado de Supabase en la conexión Postgres (hoy cifra sin validar); cambiar la contraseña débil del `super_admin` de desarrollo.
+- Pendiente menor: validar el certificado de Supabase en la conexión Postgres (hoy cifra sin validar).
+- Próxima sesión: empezar la Fase 2 definiendo la dirección visual del admin (skills `ui-design` y `frontend-design`).
 
 Decisiones de la Fase 1:
 
