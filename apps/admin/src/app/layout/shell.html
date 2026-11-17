@@ -1,0 +1,89 @@
+<div
+  class="shell"
+  [style.--os-store-color]="stores.active()?.colorPrimary ?? null"
+>
+  <header class="topbar">
+    <a class="brand" routerLink="/">O-stores</a>
+    <span class="topbar-store">{{ stores.active()?.name }}</span>
+    <button
+      type="button"
+      class="menu-button"
+      [attr.aria-expanded]="menuOpen()"
+      aria-controls="os-nav"
+      (click)="menuOpen.set(!menuOpen())"
+    >
+      Menú
+    </button>
+  </header>
+
+  <nav id="os-nav" class="nav" [class.open]="menuOpen()" aria-label="Principal">
+    <a class="brand nav-brand" routerLink="/">O-stores</a>
+
+    @if (auth.isSuperAdmin()) {
+      <div class="group">
+        <h2 class="group-title">Plataforma</h2>
+        <a class="link" routerLink="/plataforma/tiendas" routerLinkActive="active">
+          Gestionar tiendas
+        </a>
+      </div>
+    }
+
+    <div class="group">
+      <h2 class="group-title">Tus tiendas</h2>
+      @switch (stores.status()) {
+        @case ('loading') {
+          <p class="hint">Cargando…</p>
+        }
+        @case ('error') {
+          <p class="hint os-error">No se pudieron cargar.</p>
+          <button type="button" class="link" (click)="stores.load()">Reintentar</button>
+        }
+        @default {
+          @for (store of stores.stores(); track store.id) {
+            <a
+              class="link store"
+              [routerLink]="['/tienda', store.id]"
+              routerLinkActive="active"
+              [style.--mark]="store.colorPrimary"
+            >
+              <span class="mark" aria-hidden="true"></span>
+              <span class="store-name">{{ store.name }}</span>
+              @if (!store.enabled) {
+                <span class="off">Deshabilitada</span>
+              }
+            </a>
+          } @empty {
+            <p class="hint">Aún no tienes tiendas.</p>
+          }
+        }
+      }
+    </div>
+
+    @if (stores.active(); as store) {
+      <div class="group">
+        <h2 class="group-title">{{ store.name }}</h2>
+        @for (section of sections(); track section.path) {
+          <a
+            class="link"
+            [routerLink]="['/tienda', store.id, section.path]"
+            routerLinkActive="active"
+          >
+            {{ section.label }}
+          </a>
+        }
+      </div>
+    }
+
+    <div class="account">
+      <span class="os-muted email">{{ auth.me()?.email }}</span>
+      <button type="button" class="link" (click)="theme.toggle()">
+        {{ theme.mode() === 'dark' ? 'Usar tema claro' : 'Usar tema oscuro' }}
+      </button>
+      <button type="button" class="link" (click)="signOut()">Cerrar sesión</button>
+    </div>
+  </nav>
+
+  <main class="content">
+    <router-outlet />
+  </main>
+</div>

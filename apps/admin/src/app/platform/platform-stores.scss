@@ -1,0 +1,85 @@
+.create {
+  display: flex;
+  flex-direction: column;
+  gap: var(--os-space-3);
+  max-width: 720px;
+  margin-bottom: var(--os-space-5);
+  padding: var(--os-space-5);
+
+  h2 {
+    font-size: var(--os-text-lg);
+  }
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--os-space-3);
+}
+
+.modules {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--os-space-4);
+  margin: 0;
+  padding: 0;
+  border: 0;
+
+  legend {
+    margin-bottom: var(--os-space-1);
+    font-size: var(--os-text-sm);
+    color: var(--os-color-text-muted);
+  }
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--os-space-2);
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: var(--os-space-3) var(--os-space-4);
+  border-bottom: 1px solid var(--os-color-line);
+  text-align: left;
+  white-space: nowrap;
+}
+
+th {
+  font-size: var(--os-text-sm);
+  font-weight: 600;
+  color: var(--os-color-text-muted);
+}
+
+tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.store {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--os-space-2);
+  font-weight: 600;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.mark {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--mark);
+}

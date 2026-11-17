@@ -25,7 +25,12 @@ Antes de la primera pantalla de cada app, hacer el plan de dos pasadas de `front
 
 Cuidado con el modo oscuro: "fondo casi negro con un único acento ácido" es uno de los aspectos por defecto que `frontend-design` señala. Oscuro no significa negro: elegir un fondo con color propio del tema de cada app.
 
-- Admin: _pendiente (se define al empezar la Fase 2)_
+- Admin (aprobado 2026-11-17):
+  - Idea central: el admin toma el color de la tienda activa (franja superior y marca en el selector de tiendas). Es lo único llamativo; el resto es sobrio.
+  - Oscuro: Pizarra `#1C2624` (fondo), Mesa `#243230` (paneles), Grafito `#3A4A47` (bordes), Papel `#E6E9E2` (texto), Ceniza `#9AA8A3` (texto secundario), Ámbar etiqueta `#E9B949` (solo la acción principal de cada pantalla). Claro: los mismos tokens invertidos.
+  - Tipografía: Atkinson Hyperlegible Next para todo, cifras tabulares alineadas a la derecha; Atkinson Hyperlegible Mono solo para SKU, dominios y slugs.
+  - Layout: barra lateral con selector de tiendas y menú; contenido en tablas y listas alineadas a la izquierda, no cuadrícula de tarjetas. En móvil, selector arriba y menú desplegable.
+  - Elevación por superficies más claras, sin sombras. Radio 4 px en campos, 8 px en paneles. Sin animación decorativa.
 - Tienda TCG: _pendiente_
 - Tienda poleras: _pendiente_
 

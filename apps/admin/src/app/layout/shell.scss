@@ -1,0 +1,164 @@
+// Franja superior con el color de la tienda activa: lo único llamativo del admin.
+.shell {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  min-height: 100dvh;
+  border-top: 4px solid var(--os-store-color);
+}
+
+.topbar {
+  display: none;
+}
+
+.brand {
+  font-weight: 600;
+  font-size: var(--os-text-lg);
+  text-decoration: none;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--os-space-5);
+  padding: var(--os-space-5) var(--os-space-3);
+  border-right: 1px solid var(--os-color-line);
+  background: var(--os-color-surface);
+}
+
+.nav-brand {
+  padding: 0 var(--os-space-3);
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.group-title {
+  padding: 0 var(--os-space-3) var(--os-space-1);
+  font-size: var(--os-text-sm);
+  font-weight: 600;
+  color: var(--os-color-text-muted);
+}
+
+.link {
+  display: flex;
+  align-items: center;
+  gap: var(--os-space-2);
+  width: 100%;
+  padding: 6px var(--os-space-3);
+  border: 0;
+  border-radius: var(--os-radius-field);
+  background: none;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--os-color-surface-raised);
+  }
+
+  &.active {
+    background: var(--os-color-surface-raised);
+    font-weight: 600;
+  }
+}
+
+.mark {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--mark);
+}
+
+.store-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.off,
+.hint {
+  font-size: var(--os-text-sm);
+  color: var(--os-color-text-muted);
+}
+
+.hint {
+  margin: 0;
+  padding: 0 var(--os-space-3);
+}
+
+.account {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.email {
+  padding: 0 var(--os-space-3) var(--os-space-1);
+  font-size: var(--os-text-sm);
+  overflow-wrap: anywhere;
+}
+
+.content {
+  min-width: 0;
+  padding: var(--os-space-6);
+}
+
+@media (max-width: 767px) {
+  .shell {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    gap: var(--os-space-3);
+    padding: var(--os-space-3) var(--os-space-4);
+    border-bottom: 1px solid var(--os-color-line);
+    background: var(--os-color-surface);
+  }
+
+  .topbar-store {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--os-color-text-muted);
+  }
+
+  .menu-button {
+    padding: 6px var(--os-space-3);
+    border: 1px solid var(--os-color-line);
+    border-radius: var(--os-radius-field);
+    background: none;
+    color: inherit;
+    font: inherit;
+  }
+
+  .nav {
+    display: none;
+    border-right: 0;
+    border-bottom: 1px solid var(--os-color-line);
+
+    &.open {
+      display: flex;
+    }
+  }
+
+  .nav-brand {
+    display: none;
+  }
+
+  .content {
+    padding: var(--os-space-5) var(--os-space-4);
+  }
+}

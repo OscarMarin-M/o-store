@@ -15,6 +15,7 @@ function required(name: string): string {
 @Injectable()
 export class AppConfig {
   readonly supabaseUrl = required('SUPABASE_URL').replace(/\/+$/, '');
+  readonly supabasePublishableKey = required('SUPABASE_PUBLISHABLE_KEY');
   readonly supabaseSecretKey = required('SUPABASE_SECRET_KEY');
   readonly databaseUrl = required('DATABASE_URL');
   /** Solo para proyectos Supabase antiguos que firman los JWT con secreto compartido (HS256). */

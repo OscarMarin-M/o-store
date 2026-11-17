@@ -1,1 +1,163 @@
-/* You can add global styles to this file, and also import other style files */
+@use '@angular/material' as mat;
+
+// Tokens del admin (plan aprobado en la skill ui-design). Oscuro por defecto.
+:root {
+  --os-color-bg: #1c2624; // Pizarra
+  --os-color-surface: #243230; // Mesa
+  --os-color-surface-raised: #2d3d3a;
+  --os-color-line: #3a4a47; // Grafito
+  --os-color-text: #e6e9e2; // Papel
+  --os-color-text-muted: #9aa8a3; // Ceniza
+  --os-color-accent: #e9b949; // Ámbar etiqueta
+  --os-color-on-accent: #1c2624;
+  --os-color-danger: #f08a7e;
+  --os-color-success: #7cc6a0;
+  --os-color-focus: #e9b949;
+
+  // Color de la tienda activa; el layout lo reemplaza por el de la tienda.
+  --os-store-color: var(--os-color-line);
+
+  --os-font-sans: 'Atkinson Hyperlegible Next', system-ui, sans-serif;
+  --os-font-mono: 'Atkinson Hyperlegible Mono', ui-monospace, monospace;
+  --os-text-sm: 0.8125rem;
+  --os-text-base: 0.9375rem;
+  --os-text-lg: 1.125rem;
+  --os-text-xl: 1.5rem;
+
+  --os-space-1: 4px;
+  --os-space-2: 8px;
+  --os-space-3: 12px;
+  --os-space-4: 16px;
+  --os-space-5: 24px;
+  --os-space-6: 32px;
+
+  --os-radius-field: 4px;
+  --os-radius-panel: 8px;
+
+  color-scheme: dark;
+}
+
+:root[data-theme='light'] {
+  --os-color-bg: #e9ece5;
+  --os-color-surface: #f6f7f3;
+  --os-color-surface-raised: #ffffff;
+  --os-color-line: #c3ccc8;
+  --os-color-text: #1c2624;
+  --os-color-text-muted: #52605b;
+  --os-color-accent: #e9b949;
+  --os-color-on-accent: #1c2624;
+  --os-color-danger: #b3261e;
+  --os-color-success: #2e7d55;
+  --os-color-focus: #8a6510;
+
+  color-scheme: light;
+}
+
+// Material aporta comportamiento y accesibilidad; los colores salen de los tokens.
+html {
+  @include mat.theme(
+    (
+      color: (
+        theme-type: dark,
+        primary: mat.$yellow-palette,
+      ),
+      typography: 'Atkinson Hyperlegible Next',
+      density: -2,
+    )
+  );
+
+  --mat-sys-surface: var(--os-color-surface);
+  --mat-sys-surface-container: var(--os-color-surface-raised);
+  --mat-sys-surface-container-high: var(--os-color-surface-raised);
+  --mat-sys-surface-container-highest: var(--os-color-surface-raised);
+  --mat-sys-on-surface: var(--os-color-text);
+  --mat-sys-on-surface-variant: var(--os-color-text-muted);
+  --mat-sys-outline: var(--os-color-line);
+  --mat-sys-outline-variant: var(--os-color-line);
+  --mat-sys-primary: var(--os-color-accent);
+  --mat-sys-on-primary: var(--os-color-on-accent);
+  --mat-sys-error: var(--os-color-danger);
+  --mat-sys-corner-extra-small: var(--os-radius-field);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--os-color-bg);
+  color: var(--os-color-text);
+  font-family: var(--os-font-sans);
+  font-size: var(--os-text-base);
+  line-height: 1.45;
+  font-variant-numeric: tabular-nums;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  line-height: 1.2;
+}
+
+a {
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--os-color-focus);
+  outline-offset: 2px;
+}
+
+.os-mono {
+  font-family: var(--os-font-mono);
+  font-size: var(--os-text-sm);
+}
+
+.os-muted {
+  color: var(--os-color-text-muted);
+}
+
+.os-error {
+  color: var(--os-color-danger);
+}
+
+// Botón de la acción principal de la pantalla (solo uno por pantalla).
+.os-primary.mat-mdc-button-base {
+  --mat-button-filled-container-color: var(--os-color-accent);
+  --mat-button-filled-label-text-color: var(--os-color-on-accent);
+  --mat-button-filled-container-shape: var(--os-radius-field);
+}
+
+// Cabecera de página: título a la izquierda, acción principal a la derecha.
+.os-page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--os-space-3);
+  margin-bottom: var(--os-space-5);
+
+  h1 {
+    font-size: var(--os-text-xl);
+    font-weight: 600;
+  }
+}
+
+.os-panel {
+  background: var(--os-color-surface);
+  border: 1px solid var(--os-color-line);
+  border-radius: var(--os-radius-panel);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

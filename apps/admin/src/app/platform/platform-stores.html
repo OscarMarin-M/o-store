@@ -1,0 +1,111 @@
+<header class="os-page-header">
+  <h1>Tiendas</h1>
+  @if (!creating()) {
+    <button mat-flat-button class="os-primary" type="button" (click)="openForm()">
+      Nueva tienda
+    </button>
+  }
+</header>
+
+@if (creating()) {
+  <form class="os-panel create" (ngSubmit)="create()" novalidate>
+    <h2>Nueva tienda</h2>
+
+    <div class="fields">
+      <mat-form-field appearance="outline">
+        <mat-label>Nombre</mat-label>
+        <input matInput name="name" required maxlength="80" [(ngModel)]="name" (ngModelChange)="onNameChange()" />
+        @if (errors().name; as message) {
+          <mat-hint class="os-error">{{ message }}</mat-hint>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Dirección interna</mat-label>
+        <input matInput class="os-mono" name="slug" required maxlength="40" [(ngModel)]="slug" (input)="slugTouched = true" />
+        @if (errors().slug; as message) {
+          <mat-hint class="os-error">{{ message }}</mat-hint>
+        } @else {
+          <mat-hint>Se usa en el subdominio. No se puede cambiar después.</mat-hint>
+        }
+      </mat-form-field>
+    </div>
+
+    <fieldset class="modules">
+      <legend>Funciones extra</legend>
+      @for (module of modules; track module) {
+        <mat-checkbox [checked]="selected.has(module)" (change)="toggleModule(module, $event.checked)">
+          {{ moduleLabels[module] }}
+        </mat-checkbox>
+      }
+    </fieldset>
+
+    @if (errors().form; as message) {
+      <p class="os-error" role="alert">{{ message }}</p>
+    }
+
+    <div class="actions">
+      <button mat-button type="button" (click)="creating.set(false)">Cancelar</button>
+      <button mat-flat-button class="os-primary" type="submit" [disabled]="saving()">
+        {{ saving() ? 'Creando…' : 'Crear tienda' }}
+      </button>
+    </div>
+  </form>
+}
+
+@switch (stores.status()) {
+  @case ('loading') {
+    <p class="os-muted">Cargando tiendas…</p>
+  }
+  @case ('error') {
+    <p class="os-error" role="alert">
+      No se pudieron cargar las tiendas.
+      <button mat-button type="button" (click)="stores.load()">Reintentar</button>
+    </p>
+  }
+  @default {
+    @if (stores.stores().length) {
+      <div class="os-panel table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Tienda</th>
+              <th scope="col">Dirección interna</th>
+              <th scope="col">Funciones extra</th>
+              <th scope="col">Habilitada</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (store of stores.stores(); track store.id) {
+              <tr>
+                <td>
+                  <a class="store" [routerLink]="['/tienda', store.id]" [style.--mark]="store.colorPrimary">
+                    <span class="mark" aria-hidden="true"></span>{{ store.name }}
+                  </a>
+                </td>
+                <td class="os-mono">{{ store.slug }}</td>
+                <td class="os-muted">
+                  @for (module of store.modules; track module; let last = $last) {
+                    {{ moduleLabel(module) }}{{ last ? '' : ', ' }}
+                  } @empty {
+                    Ninguna
+                  }
+                </td>
+                <td>
+                  <mat-slide-toggle
+                    [checked]="store.enabled"
+                    [disabled]="toggling() === store.id"
+                    (change)="setEnabled(store, $event)"
+                    [aria-label]="'Habilitar ' + store.name"
+                  />
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else if (!creating()) {
+      <p class="os-muted">No hay tiendas todavía. Crea la primera con «Nueva tienda».</p>
+    }
+  }
+}

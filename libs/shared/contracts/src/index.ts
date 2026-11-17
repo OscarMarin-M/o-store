@@ -131,6 +131,12 @@ export interface MembershipDto {
   role: Role;
 }
 
+/** Configuración pública para los front (GET /api/public/config). */
+export interface ClientConfigDto {
+  supabaseUrl: string;
+  supabasePublishableKey: string;
+}
+
 export interface MeDto {
   id: string;
   email: string | null;

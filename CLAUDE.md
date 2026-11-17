@@ -66,7 +66,13 @@ Roles: `super_admin`, `store_owner`, `store_staff` (en `platform.memberships`) y
 - Fase 0: monorepo creado, `admin` y `api` compilan. Remoto `origin` = https://github.com/OscarMarin-M/o-store.git. `main` subido y con seguimiento de `origin/main`. Proyecto Supabase creado y `.env` completo.
 - Fase 0.5: `CLAUDE.md`, skills y hook de cierre creados. Los planes de tokens visuales (admin y cada tienda) se definen al empezar su interfaz y se anotan en `ui-design`.
 - Fase 1 (API base): código escrito, compila, lint limpio y 16 pruebas unitarias pasan (guards y ejecutor de migraciones). Incluye `libs/shared/contracts` (zod), migraciones en `db/migrations`, guards de sesión y roles, módulos `stores` y `memberships`, y `GET /api/public/stores/resolve?host=`. Probada contra Supabase con un flujo completo (crear tiendas, tema, dominios, `resolve`, roles y 403 entre tiendas). En la base de desarrollo existen `platform`, las tiendas `tcg` y `poleras` (`tenant_tcg`, `tenant_poleras`), el dominio verificado `tcg.localhost` y el `super_admin` de Oscar. Fase 1 terminada.
-- Fase 2 (administrador): sin empezar; es lo siguiente.
+- Fase 2 (administrador): en curso. Dirección visual aprobada (ver `ui-design`).
+
+Decisiones de la Fase 2:
+
+- Una sola app `admin`; el menú cambia según el rol. `super_admin` ve la sección Plataforma (tiendas, habilitar/deshabilitar, dominios, módulos, asignar dueños) y puede entrar a cualquier tienda. `store_owner` gestiona productos, pedidos, entregas, clientes y equipo de sus tiendas. `store_staff`: el día a día (productos, pedidos), sin equipo ni ajustes.
+- Tema y logo: Oscar pone los iniciales; el dueño puede ajustar logo y colores desde el admin. Cambios de HTML/CSS que pida un cliente se hacen en el código de su app `apps/store-<nombre>`, por eso cada tienda es independiente.
+- Dominios, dos opciones: subdominio de la plataforma (se crea con la tienda, verificado al instante) o dominio propio del dueño (lo escribe en el admin, se le muestra el registro DNS a crear y se verifica; al principio con un botón del `super_admin`, luego automático). HTTPS de dominios propios se decide en la fase de despliegue.
 - Pendiente menor: validar el certificado de Supabase en la conexión Postgres (hoy cifra sin validar).
 - Próxima sesión: empezar la Fase 2 definiendo la dirección visual del admin (skills `ui-design` y `frontend-design`).
 
