@@ -12,7 +12,7 @@ import { MatButtonModule } from '@angular/material/button';
 import type { LogoUploadInput } from '@o-stores/contracts';
 import { StoresService } from '../../core/stores.service';
 import { readableTextOn, themeWarnings, type ThemeColors } from './contrast';
-import { uploadWithProgress, type UploadHandle } from './upload';
+import { uploadWithProgress, type UploadHandle } from '../../core/upload';
 
 const MAX_LOGO_BYTES = 2 * 1024 * 1024;
 const LOGO_TYPES: Record<string, LogoUploadInput['extension']> = {

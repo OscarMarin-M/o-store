@@ -19,4 +19,5 @@ export const STORE_SECTIONS: StoreSection[] = [
   { path: 'equipo', label: 'Equipo', roles: ownerOnly },
   { path: 'apariencia', label: 'Logo y colores', roles: ownerOnly },
   { path: 'dominios', label: 'Dominios', roles: ownerOnly },
+  { path: 'ajustes', label: 'Ajustes', roles: ownerOnly },
 ];

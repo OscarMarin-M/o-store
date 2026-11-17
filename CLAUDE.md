@@ -1,6 +1,6 @@
 # O-stores
 
-Plataforma multitienda: un administrador desde el que se crean y gestionan tiendas online independientes. Primeras tiendas: cartas Yu-Gi-Oh/TCG y poleras personalizadas. Proyecto personal que podría venderse a tiendas pequeñas y medianas.
+Plataforma multitienda: un administrador desde el que se crean y gestionan tiendas online independientes. Primeras tiendas: cartas Yu-Gi-Oh/TCG y poleras personalizadas. Proyecto personal que podría venderse a tiendas pequeñas y medianas. Mercado: Bolivia (precios en bolivianos, ejemplos de dominio `.com.bo`).
 
 ## Cómo trabajar con Oscar
 
@@ -25,7 +25,7 @@ Plataforma multitienda: un administrador desde el que se crean y gestionan tiend
 - `npx nx serve api` — API en http://localhost:3000/api.
 - `npx nx run-many -t build` — compilar todo.
 - `npx nx test admin` / `npx nx test api` — pruebas (Vitest).
-- `npx nx migrate api` — compila y aplica migraciones pendientes a `platform` y a cada tienda (toca Supabase: pedir confirmación).
+- `npx nx run api:migrate` — compila y aplica migraciones pendientes a `platform` y a cada tienda (toca Supabase: pedir confirmación).
 - `node dist/apps/api/main.js --grant-super-admin <correo>` — da `super_admin` a una cuenta ya creada en Supabase Auth.
 - `npx nx g @nx/angular:library --directory=libs/<ruta>` — nueva librería.
 
@@ -67,7 +67,7 @@ Roles: `super_admin`, `store_owner`, `store_staff` (en `platform.memberships`) y
 - Fase 0: monorepo creado, `admin` y `api` compilan. Remoto `origin` = https://github.com/OscarMarin-M/o-store.git. `main` subido y con seguimiento de `origin/main`. Proyecto Supabase creado y `.env` completo.
 - Fase 0.5: `CLAUDE.md`, skills y hook de cierre creados. Los planes de tokens visuales (admin y cada tienda) se definen al empezar su interfaz y se anotan en `ui-design`.
 - Fase 1 (API base): código escrito, compila, lint limpio y 16 pruebas unitarias pasan (guards y ejecutor de migraciones). Incluye `libs/shared/contracts` (zod), migraciones en `db/migrations`, guards de sesión y roles, módulos `stores` y `memberships`, y `GET /api/public/stores/resolve?host=`. Probada contra Supabase con un flujo completo (crear tiendas, tema, dominios, `resolve`, roles y 403 entre tiendas). En la base de desarrollo existen `platform`, las tiendas `tcg` y `poleras` (`tenant_tcg`, `tenant_poleras`), el dominio verificado `tcg.localhost` y el `super_admin` de Oscar. Fase 1 terminada.
-- Fase 2 (administrador): en curso. Dirección visual aprobada (ver `ui-design`). Hecho y subido: tokens y tema de Material, inicio de sesión con correo (Supabase iniciado con `GET /api/public/config`), guards por rol, layout con franja del color de la tienda activa y menú por rol (`apps/admin/src/app/store/store-sections.ts`), Plataforma > Tiendas (listar, crear, habilitar) y las secciones "Logo y colores" (subida a Storage con URL firmada, avisos de contraste) y "Dominios", y un diálogo de confirmación propio (`ConfirmService`). El resto de secciones de tienda muestran un aviso de pendiente; se conectan en `SECTION_PAGES` de `app.routes.ts`. Siguiente: decidir la próxima sección de tienda (productos, pedidos o equipo). Pendiente: entrar con Google; poder volver a dejar el subdominio como principal.
+- Fase 2 (administrador): en curso. Dirección visual aprobada (ver `ui-design`). Hecho y subido: tokens y tema de Material, inicio de sesión con correo (Supabase iniciado con `GET /api/public/config`), guards por rol, layout con franja del color de la tienda activa y menú por rol (`apps/admin/src/app/store/store-sections.ts`), Plataforma > Tiendas (listar, crear, habilitar) y las secciones "Logo y colores" (subida a Storage con URL firmada, avisos de contraste) y "Dominios", y un diálogo de confirmación propio (`ConfirmService`). El resto de secciones de tienda muestran un aviso de pendiente; se conectan en `SECTION_PAGES` de `app.routes.ts`. Productos: lista con búsqueda y filtros, formulario con fotos (varias, reordenables), precio en Bs o USD con equivalente, variantes y archivar; sección Ajustes (moneda y prefijo de código). Siguiente: categorías y atributos de los módulos `tcg` y `apparel`, luego pedidos. Pendiente: entrar con Google; poder volver a dejar el subdominio como principal.
 
 Decisiones de la Fase 2:
 
@@ -75,7 +75,10 @@ Decisiones de la Fase 2:
 - Tema y logo: Oscar pone los iniciales; el dueño puede ajustar logo y colores desde el admin. Cambios de HTML/CSS que pida un cliente se hacen en el código de su app `apps/store-<nombre>`, por eso cada tienda es independiente.
 - Dominios: el subdominio `<slug>.<PLATFORM_DOMAIN>` no se guarda en la base; `resolve` lo calcula desde el slug (en desarrollo `PLATFORM_DOMAIN=localhost`). Dominio propio: el dueño crea un TXT `_ostores.<dominio>` con un código HMAC del id del dominio (sin columna nueva) y la API lo comprueba en el DNS (`POST .../domains/:id/check`); `super_admin` puede forzar la verificación. Solo un dominio verificado puede ser principal; no se aceptan subdominios de la plataforma como dominio propio. `resolve` devuelve `primaryDomain` (dominio propio principal o subdominio) para que la tienda pública redirija con 301. HTTPS de dominios propios se decide en la fase de despliegue.
 - Pendiente menor: validar el certificado de Supabase en la conexión Postgres (hoy cifra sin validar).
-- Próxima sesión: seguir la Fase 2 con la siguiente sección de tienda.
+- Próxima sesión: seguir la Fase 2 (categorías, atributos de módulos, pedidos).
+- Catálogo (migración `tenant/base/0002_catalog.sql`): tabla `settings` de una fila por tienda (moneda, prefijo de código). Cada producto tiene un código público único `PREFIJO-0001` (secuencia `product_code_seq`, editable a mano) y sus variantes `PREFIJO-0001-M-NEGRO`; las reglas de códigos están en `libs/shared/contracts/src/codes.ts`. Variantes en `product_variants` (`option_names` en el producto, `option_values` en la variante, precio propio opcional). Precio en `BOB` o `USD` por producto.
+- Tipo de cambio USD→BOB: `ExchangeRateService` con proveedores intercambiables y caché de 6 h; hoy solo el manual (`USD_BOB_RATE`). Falta el proveedor del Banco Central de Bolivia (confirmar su fuente de datos).
+- Productos no se borran: se archivan, para que los pedidos antiguos conserven la referencia.
 
 Decisiones de la Fase 1:
 

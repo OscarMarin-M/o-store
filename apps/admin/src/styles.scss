@@ -117,6 +117,16 @@ a {
   font-size: var(--os-text-sm);
 }
 
+// Oculto a la vista pero leído por lectores de pantalla.
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 .os-muted {
   color: var(--os-color-text-muted);
 }

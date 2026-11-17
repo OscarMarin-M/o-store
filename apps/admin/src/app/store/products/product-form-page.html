@@ -1,0 +1,217 @@
+@if (store(); as store) {
+  <a class="back" [routerLink]="['/tienda', store.id, 'productos']">Volver a productos</a>
+
+  @switch (loadState()) {
+    @case ('loading') {
+      <p class="os-muted">Cargando producto…</p>
+    }
+    @case ('error') {
+      <h1>No encontramos este producto</h1>
+      <p class="os-muted">Puede que se haya movido a otra tienda o que el enlace esté incompleto.</p>
+    }
+    @default {
+      <header class="os-page-header">
+        <h1>{{ isNew() ? 'Nuevo producto' : name() || 'Producto sin nombre' }}</h1>
+        <div class="actions">
+          @if (product(); as p) {
+            @if (p.status === 'archived') {
+              <button mat-button type="button" (click)="changeStatus('draft')">Restaurar como borrador</button>
+            } @else {
+              <button mat-button type="button" (click)="changeStatus('archived')">Archivar</button>
+            }
+          }
+          <button mat-flat-button class="os-primary" type="button" [disabled]="saving() || uploading()" (click)="save()">
+            {{ saving() ? 'Guardando…' : uploading() ? 'Esperando fotos…' : isNew() ? 'Crear producto' : 'Guardar cambios' }}
+          </button>
+        </div>
+      </header>
+
+      @if (message(); as m) {
+        <p class="message" [class.os-error]="m.kind === 'error'" [class.ok]="m.kind === 'ok'" role="status">{{ m.text }}</p>
+      }
+      @if (product()?.status === 'archived') {
+        <p class="note">Este producto está archivado: no se ve en la tienda.</p>
+      }
+
+      <form class="form" (ngSubmit)="save()" novalidate>
+        <section class="os-panel block" aria-labelledby="basics">
+          <h2 id="basics">Datos</h2>
+          <div class="field">
+            <label for="p-name">Nombre</label>
+            <input id="p-name" name="name" maxlength="160" [ngModel]="name()" (ngModelChange)="name.set($event)" [attr.aria-invalid]="!!errors()['name']" />
+            @if (errors()['name']; as e) { <p class="field-error">{{ e }}</p> }
+          </div>
+          <div class="field narrow">
+            <label for="p-code">Código público</label>
+            <input
+              id="p-code"
+              name="code"
+              class="os-mono"
+              maxlength="40"
+              spellcheck="false"
+              [placeholder]="'Se genera solo: ' + prefix() + '-…'"
+              [ngModel]="code()"
+              (ngModelChange)="code.set($event)"
+            />
+            @if (errors()['code']; as e) {
+              <p class="field-error">{{ e }}</p>
+            } @else {
+              <p class="hint">Lo ven tus clientes para pedirte el producto. Déjalo vacío y se asigna el siguiente número.</p>
+            }
+          </div>
+          <div class="field">
+            <label for="p-desc">Descripción</label>
+            <textarea id="p-desc" name="description" rows="5" maxlength="5000" [ngModel]="description()" (ngModelChange)="description.set($event)"></textarea>
+          </div>
+        </section>
+
+        <section class="os-panel block" aria-labelledby="photos">
+          <h2 id="photos">Fotos</h2>
+          <os-product-images [(images)]="images" [requestUpload]="requestUpload" />
+        </section>
+
+        <section class="os-panel block" aria-labelledby="pricing">
+          <h2 id="pricing">Precio y stock</h2>
+          <div class="row">
+            <div class="field narrow">
+              <label for="p-price">Precio</label>
+              <input id="p-price" name="price" inputmode="decimal" class="num" [ngModel]="price()" (ngModelChange)="price.set($event)" [attr.aria-invalid]="!!errors()['price']" />
+              @if (errors()['price']; as e) {
+                <p class="field-error">{{ e }}</p>
+              } @else if (equivalent(); as eq) {
+                <p class="hint">Equivale a {{ eq }} al tipo oficial ({{ rate()?.rate }} Bs por dólar).</p>
+              }
+            </div>
+            <div class="field narrow">
+              <label for="p-currency">Moneda del precio</label>
+              <select id="p-currency" name="currency" [ngModel]="currency()" (ngModelChange)="currency.set($event)">
+                @for (c of currencies; track c) {
+                  <option [value]="c">{{ currencyLabels[c] }}</option>
+                }
+              </select>
+              @if (currency() === 'USD') {
+                <p class="hint">En la tienda se mostrará en bolivianos, al tipo oficial del día.</p>
+              }
+            </div>
+            @if (!hasVariants()) {
+              <div class="field narrow">
+                <label for="p-stock">Stock</label>
+                <input id="p-stock" name="stock" inputmode="numeric" class="num" [ngModel]="stock()" (ngModelChange)="stock.set($event)" [attr.aria-invalid]="!!errors()['stock']" />
+                @if (errors()['stock']; as e) { <p class="field-error">{{ e }}</p> }
+              </div>
+            }
+          </div>
+
+          <label class="check">
+            <input type="checkbox" name="hasVariants" [ngModel]="hasVariants()" (ngModelChange)="toggleVariants($event)" />
+            Tiene variantes (por ejemplo tallas o colores), cada una con su stock
+          </label>
+
+          @if (hasVariants()) {
+            <div class="options">
+              @for (option of options(); track $index; let i = $index) {
+                <div class="option">
+                  <div class="field option-name">
+                    <label [for]="'opt-name-' + i">Opción</label>
+                    <input [id]="'opt-name-' + i" [name]="'optName' + i" maxlength="30" [ngModel]="option.name" (ngModelChange)="setOptionName(i, $event)" />
+                  </div>
+                  <div class="field option-values">
+                    <label [for]="'opt-values-' + i">Valores</label>
+                    <div class="chips">
+                      @for (value of option.values; track value; let vi = $index) {
+                        <span class="chip">
+                          {{ value }}
+                          <button type="button" class="chip-remove" (click)="removeValue(i, vi)" [attr.aria-label]="'Quitar ' + value">×</button>
+                        </span>
+                      }
+                      <input
+                        [id]="'opt-values-' + i"
+                        [name]="'optValues' + i"
+                        maxlength="40"
+                        [placeholder]="option.values.length ? 'Añadir otro' : 'Escribe y pulsa Enter: S, M, L'"
+                        [ngModel]="option.pending"
+                        (ngModelChange)="setPending(i, $event)"
+                        (keydown)="onValueKey(i, $event)"
+                        (blur)="commitPending(i)"
+                      />
+                    </div>
+                  </div>
+                  <button mat-button type="button" (click)="removeOption(i)">Quitar opción</button>
+                </div>
+              }
+              @if (errors()['optionNames']; as e) { <p class="field-error">{{ e }}</p> }
+              @if (options().length < 3) {
+                <button mat-button type="button" class="add-option" (click)="addOption()">Añadir otra opción</button>
+              }
+            </div>
+
+            @if (variantRows().length) {
+              @if (tooManyVariants()) {
+                <p class="field-error">Son {{ variantRows().length }} combinaciones y el máximo es 100.</p>
+              }
+              <div class="table-wrap">
+                <table class="variants">
+                  <thead>
+                    <tr>
+                      <th scope="col">Variante</th>
+                      <th scope="col">Código</th>
+                      <th scope="col" class="num">Precio</th>
+                      <th scope="col" class="num">Stock</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (row of variantRows(); track row.key) {
+                      <tr>
+                        <td>{{ row.values.join(' / ') }}</td>
+                        <td class="os-mono os-muted">{{ row.code }}</td>
+                        <td class="num">
+                          <input
+                            inputmode="decimal"
+                            class="num"
+                            [name]="'vprice-' + row.key"
+                            [placeholder]="price() || 'Igual'"
+                            [attr.aria-label]="'Precio de ' + row.values.join(' / ') + ', vacío usa el del producto'"
+                            [ngModel]="variant(row.key).price"
+                            (ngModelChange)="setVariant(row.key, 'price', $event)"
+                          />
+                        </td>
+                        <td class="num">
+                          <input
+                            inputmode="numeric"
+                            class="num"
+                            [name]="'vstock-' + row.key"
+                            [attr.aria-label]="'Stock de ' + row.values.join(' / ')"
+                            [ngModel]="variant(row.key).stock"
+                            (ngModelChange)="setVariant(row.key, 'stock', $event)"
+                          />
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+              <p class="hint">El precio vacío usa el del producto. Los códigos se fijan al guardar.</p>
+            }
+            @if (errors()['variants']; as e) { <p class="field-error">{{ e }}</p> }
+          }
+        </section>
+
+        @if (product()?.status !== 'archived') {
+          <section class="os-panel block" aria-labelledby="visibility">
+            <h2 id="visibility">Visibilidad</h2>
+            <div class="radios" role="radiogroup" aria-labelledby="visibility">
+              <label class="check">
+                <input type="radio" name="status" value="draft" [ngModel]="status()" (ngModelChange)="status.set($event)" />
+                Borrador: solo lo ves en el admin
+              </label>
+              <label class="check">
+                <input type="radio" name="status" value="active" [ngModel]="status()" (ngModelChange)="status.set($event)" />
+                Publicado: se ve en la tienda
+              </label>
+            </div>
+          </section>
+        }
+      </form>
+    }
+  }
+}

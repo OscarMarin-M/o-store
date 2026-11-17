@@ -85,7 +85,7 @@ export class DomainsPage {
     const raw = this.newDomain.replace(/^https?:\/\//i, '').replace(/\/.*$/, '');
     const parsed = createDomainSchema.shape.domain.safeParse(raw);
     if (!parsed.success) {
-      this.addError.set('Escribe solo el dominio, sin https:// ni rutas. Por ejemplo cartastcg.cl.');
+      this.addError.set('Escribe solo el dominio, sin https:// ni rutas. Por ejemplo cartastcg.com.bo.');
       return;
     }
     this.saving.set(true);

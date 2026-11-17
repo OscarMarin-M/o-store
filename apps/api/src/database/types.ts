@@ -50,3 +50,59 @@ export interface DB {
   'platform.memberships': MembershipsTable;
   'auth.users': AuthUsersTable;
 }
+
+// ---- Tablas de cada tienda (esquema tenant_<slug>, se usan con withSchema) ----
+
+export interface SettingsTable {
+  id: Generated<boolean>;
+  currency: Generated<'BOB' | 'USD'>;
+  productCodePrefix: Generated<string>;
+  updatedAt: Generated<Date>;
+}
+
+export interface CategoriesTable {
+  id: Generated<string>;
+  name: string;
+  slug: string;
+  parentId: string | null;
+  position: Generated<number>;
+  createdAt: Generated<Date>;
+}
+
+export interface ProductsTable {
+  id: Generated<string>;
+  code: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  /** numeric: pg lo devuelve como texto. */
+  price: string | number;
+  priceCurrency: Generated<'BOB' | 'USD'>;
+  stock: Generated<number>;
+  status: Generated<'draft' | 'active' | 'archived'>;
+  categoryId: string | null;
+  images: Generated<string[]>;
+  optionNames: Generated<string[]>;
+  attributes: Generated<Record<string, unknown>>;
+  createdAt: Generated<Date>;
+  updatedAt: Generated<Date>;
+}
+
+export interface ProductVariantsTable {
+  id: Generated<string>;
+  productId: string;
+  code: string;
+  optionValues: string[];
+  price: string | number | null;
+  stock: Generated<number>;
+  position: Generated<number>;
+  createdAt: Generated<Date>;
+  updatedAt: Generated<Date>;
+}
+
+export interface TenantDB {
+  settings: SettingsTable;
+  categories: CategoriesTable;
+  products: ProductsTable;
+  productVariants: ProductVariantsTable;
+}

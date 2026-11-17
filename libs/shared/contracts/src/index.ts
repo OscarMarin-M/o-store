@@ -174,3 +174,167 @@ export interface PublicStoreDto {
   colorBackground: string;
   theme: Record<string, unknown>;
 }
+
+// ---- Catálogo ----
+
+export const CURRENCIES = ['BOB', 'USD'] as const;
+export type Currency = (typeof CURRENCIES)[number];
+
+export const PRODUCT_STATUSES = ['draft', 'active', 'archived'] as const;
+export type ProductStatus = (typeof PRODUCT_STATUSES)[number];
+
+const productCode = z
+  .string()
+  .trim()
+  .toUpperCase()
+  .regex(/^[A-Z0-9][A-Z0-9-]{0,39}$/, 'Letras, números y guiones, hasta 40 caracteres');
+
+const money = z.number({ error: 'Escribe un importe, por ejemplo 120 o 15,50' }).min(0, 'No puede ser negativo').max(9_999_999_999.99).multipleOf(0.01, 'Máximo dos decimales');
+const stock = z.number({ error: 'Escribe un número entero, 0 o más' }).int('Debe ser un número entero').min(0, 'No puede ser negativo');
+
+export const variantInputSchema = z.strictObject({
+  /** Valores en el orden de optionNames: ["M", "Negro"]. */
+  optionValues: z.array(z.string().trim().min(1).max(40)).min(1).max(3),
+  /** null = usa el precio del producto. */
+  price: money.nullable().default(null),
+  stock: stock.default(0),
+});
+export type VariantInput = z.infer<typeof variantInputSchema>;
+
+export const productInputSchema = z
+  .strictObject({
+    name: z.string().trim().min(1, 'Escribe el nombre').max(160),
+    /** Vacío = se genera con el prefijo de la tienda. */
+    code: productCode.optional(),
+    description: z.string().trim().max(5000).nullable().default(null),
+    price: money,
+    priceCurrency: z.enum(CURRENCIES).default('BOB'),
+    /** Solo cuenta si el producto no tiene variantes. */
+    stock: stock.default(0),
+    status: z.enum(PRODUCT_STATUSES).default('draft'),
+    categoryId: z.uuid().nullable().default(null),
+    /** Rutas en Storage; la primera es la portada. */
+    images: z.array(z.string().max(300)).max(12).default([]),
+    optionNames: z.array(z.string().trim().min(1).max(30)).max(3).default([]),
+    variants: z.array(variantInputSchema).max(100).default([]),
+  })
+  .superRefine((p, ctx) => {
+    const names = p.optionNames.map((n) => n.toLowerCase());
+    if (new Set(names).size !== names.length) {
+      ctx.addIssue({ code: 'custom', path: ['optionNames'], message: 'Las opciones no pueden repetirse' });
+    }
+    const seen = new Set<string>();
+    p.variants.forEach((v, i) => {
+      if (v.optionValues.length !== p.optionNames.length) {
+        ctx.addIssue({ code: 'custom', path: ['variants', i], message: 'Cada variante necesita un valor por opción' });
+      }
+      const key = v.optionValues.map((x) => x.toLowerCase()).join('\u0000');
+      if (seen.has(key)) {
+        ctx.addIssue({ code: 'custom', path: ['variants', i], message: 'Esta combinación está repetida' });
+      }
+      seen.add(key);
+    });
+    if (p.optionNames.length && !p.variants.length) {
+      ctx.addIssue({ code: 'custom', path: ['variants'], message: 'Añade al menos una variante o quita las opciones' });
+    }
+  });
+export type ProductInput = z.infer<typeof productInputSchema>;
+
+export const productListQuerySchema = z.object({
+  q: z.string().trim().max(100).optional(),
+  status: z.enum(PRODUCT_STATUSES).optional(),
+  page: z.coerce.number().int().min(1).default(1),
+});
+export type ProductListQuery = z.infer<typeof productListQuerySchema>;
+
+export const productImageUploadSchema = z.strictObject({
+  extension: z.enum(['png', 'jpg', 'jpeg', 'webp']),
+});
+export type ProductImageUploadInput = z.infer<typeof productImageUploadSchema>;
+
+export const updateStoreSettingsSchema = z.strictObject({
+  currency: z.enum(CURRENCIES).optional(),
+  productCodePrefix: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .regex(/^[A-Z0-9]{1,8}$/, 'De 1 a 8 letras o números, sin espacios')
+    .optional(),
+});
+export type UpdateStoreSettingsInput = z.infer<typeof updateStoreSettingsSchema>;
+
+export interface StoreSettingsDto {
+  currency: Currency;
+  productCodePrefix: string;
+}
+
+export interface ProductVariantDto {
+  id: string;
+  code: string;
+  optionValues: string[];
+  price: number | null;
+  stock: number;
+}
+
+export interface ProductImageDto {
+  path: string;
+  url: string;
+}
+
+export interface ProductDto {
+  id: string;
+  code: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  price: number;
+  priceCurrency: Currency;
+  stock: number;
+  status: ProductStatus;
+  categoryId: string | null;
+  images: ProductImageDto[];
+  optionNames: string[];
+  variants: ProductVariantDto[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProductListItemDto {
+  id: string;
+  code: string;
+  name: string;
+  status: ProductStatus;
+  price: number;
+  priceCurrency: Currency;
+  /** Stock del producto o suma de sus variantes. */
+  totalStock: number;
+  variantCount: number;
+  coverUrl: string | null;
+  updatedAt: string;
+}
+
+export interface ProductListDto {
+  items: ProductListItemDto[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface ProductImageUploadDto {
+  path: string;
+  signedUrl: string;
+}
+
+/** Tipo de cambio oficial: 1 USD = rate BOB. */
+export interface ExchangeRateDto {
+  base: 'USD';
+  quote: 'BOB';
+  rate: number;
+  /** De dónde salió: 'manual' (variable de entorno) o 'bcb'. */
+  source: string;
+  fetchedAt: string;
+}
+
+export const setProductStatusSchema = z.strictObject({ status: z.enum(PRODUCT_STATUSES) });
+export type SetProductStatusInput = z.infer<typeof setProductStatusSchema>;
+export * from './codes';

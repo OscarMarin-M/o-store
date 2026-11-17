@@ -19,6 +19,24 @@ const SECTION_PAGES: Record<string, Loader> = {
     import('./store/appearance/appearance-page').then((m) => m.AppearancePage),
   dominios: () =>
     import('./store/domains/domains-page').then((m) => m.DomainsPage),
+  ajustes: () =>
+    import('./store/settings/settings-page').then((m) => m.SettingsPage),
+};
+
+const productForm: Loader = () =>
+  import('./store/products/product-form-page').then((m) => m.ProductFormPage);
+
+/** Secciones con varias pantallas dentro (lista y detalle). */
+const SECTION_CHILDREN: Record<string, Route[]> = {
+  productos: [
+    {
+      path: '',
+      loadComponent: () =>
+        import('./store/products/products-page').then((m) => m.ProductsPage),
+    },
+    { path: 'nuevo', title: 'Nuevo producto', loadComponent: productForm },
+    { path: ':productId', title: 'Producto', loadComponent: productForm },
+  ],
 };
 
 export const appRoutes: Route[] = [
@@ -59,7 +77,9 @@ export const appRoutes: Route[] = [
               title: section.label,
               canActivate: [storeRoleGuard(section.roles)],
               data: { title: section.label },
-              loadComponent: SECTION_PAGES[section.path] ?? pendingSection,
+              ...(SECTION_CHILDREN[section.path]
+                ? { children: SECTION_CHILDREN[section.path] }
+                : { loadComponent: SECTION_PAGES[section.path] ?? pendingSection }),
             }),
           ),
         ],
