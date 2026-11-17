@@ -59,6 +59,7 @@ Roles: `super_admin`, `store_owner`, `store_staff` (en `platform.memberships`) y
 - Git no traía gestor de credenciales configurado; este repo usa `credential.helper=manager` (config local), con lo que Claude puede hacer push desde su shell. Sigue pidiendo confirmación antes.
 - `DATABASE_URL` debe ser la del Session pooler (`...pooler.supabase.com`, usuario `postgres.<ref>`); la conexión directa `db.<ref>.supabase.co` es solo IPv6 y no resuelve desde este equipo.
 - Oscar prefiere ejecutar él mismo en el SQL Editor los cambios de estructura sobre `platform`: pasarle el SQL (incluyendo el registro en `platform.schema_migrations`).
+- `PORT` en `.env` es el puerto de la API (3000, al que apunta el proxy del admin), no el de Postgres.
 - Secretos en `.env` (ignorado por git). Nunca escribir claves en archivos versionados.
 
 ## Estado
@@ -66,7 +67,7 @@ Roles: `super_admin`, `store_owner`, `store_staff` (en `platform.memberships`) y
 - Fase 0: monorepo creado, `admin` y `api` compilan. Remoto `origin` = https://github.com/OscarMarin-M/o-store.git. `main` subido y con seguimiento de `origin/main`. Proyecto Supabase creado y `.env` completo.
 - Fase 0.5: `CLAUDE.md`, skills y hook de cierre creados. Los planes de tokens visuales (admin y cada tienda) se definen al empezar su interfaz y se anotan en `ui-design`.
 - Fase 1 (API base): código escrito, compila, lint limpio y 16 pruebas unitarias pasan (guards y ejecutor de migraciones). Incluye `libs/shared/contracts` (zod), migraciones en `db/migrations`, guards de sesión y roles, módulos `stores` y `memberships`, y `GET /api/public/stores/resolve?host=`. Probada contra Supabase con un flujo completo (crear tiendas, tema, dominios, `resolve`, roles y 403 entre tiendas). En la base de desarrollo existen `platform`, las tiendas `tcg` y `poleras` (`tenant_tcg`, `tenant_poleras`), el dominio verificado `tcg.localhost` y el `super_admin` de Oscar. Fase 1 terminada.
-- Fase 2 (administrador): en curso. Dirección visual aprobada (ver `ui-design`).
+- Fase 2 (administrador): en curso. Dirección visual aprobada (ver `ui-design`). Hecho y subido: tokens y tema de Material, inicio de sesión con correo (Supabase iniciado con `GET /api/public/config`), guards por rol, layout con franja del color de la tienda activa y menú por rol (`apps/admin/src/app/store/store-sections.ts`), y Plataforma > Tiendas (listar, crear, habilitar). Las secciones de tienda muestran un aviso de pendiente. Siguiente: "Logo y colores", luego "Dominios". Pendiente: entrar con Google, diálogo de confirmación propio en vez de `confirm()`.
 
 Decisiones de la Fase 2:
 
@@ -74,7 +75,7 @@ Decisiones de la Fase 2:
 - Tema y logo: Oscar pone los iniciales; el dueño puede ajustar logo y colores desde el admin. Cambios de HTML/CSS que pida un cliente se hacen en el código de su app `apps/store-<nombre>`, por eso cada tienda es independiente.
 - Dominios, dos opciones: subdominio de la plataforma (se crea con la tienda, verificado al instante) o dominio propio del dueño (lo escribe en el admin, se le muestra el registro DNS a crear y se verifica; al principio con un botón del `super_admin`, luego automático). HTTPS de dominios propios se decide en la fase de despliegue.
 - Pendiente menor: validar el certificado de Supabase en la conexión Postgres (hoy cifra sin validar).
-- Próxima sesión: empezar la Fase 2 definiendo la dirección visual del admin (skills `ui-design` y `frontend-design`).
+- Próxima sesión: seguir la Fase 2 con la sección "Logo y colores" de cada tienda.
 
 Decisiones de la Fase 1:
 
