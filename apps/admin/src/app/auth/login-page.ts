@@ -17,8 +17,11 @@ import { AuthService } from '../core/auth.service';
 
         @if (auth.unavailable()) {
           <p class="os-error" role="alert">
-            No hay conexión con el servidor. Enciende la API con <span class="os-mono">npx nx serve api</span> y recarga la página.
+            No hay conexión con el servidor. Revisa que la API esté encendida (<span class="os-mono">npx nx serve api</span>).
           </p>
+          <button mat-button type="button" [disabled]="retrying()" (click)="retry()">
+            {{ retrying() ? 'Conectando…' : 'Reintentar' }}
+          </button>
         }
 
         <mat-form-field appearance="outline">
@@ -73,6 +76,16 @@ export class LoginPage {
   protected password = '';
   protected readonly busy = signal(false);
   protected readonly error = signal<string | null>(null);
+
+  protected readonly retrying = signal(false);
+
+  protected async retry(): Promise<void> {
+    this.retrying.set(true);
+    await this.auth.init();
+    this.retrying.set(false);
+    // Si había una sesión guardada, ya se puede entrar directamente.
+    if (this.auth.me()) await this.router.navigateByUrl('/');
+  }
 
   protected async submit(): Promise<void> {
     if (!this.email || !this.password) {

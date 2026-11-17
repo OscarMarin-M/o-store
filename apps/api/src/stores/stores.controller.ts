@@ -116,6 +116,17 @@ export class StoresController {
     return this.stores.updateDomain(storeId, domainId, body, isSuperAdmin);
   }
 
+  /** Comprueba en el DNS el registro TXT de verificación. */
+  @Post(':storeId/domains/:domainId/check')
+  @Roles('store_owner')
+  @HttpCode(200)
+  checkDomain(
+    @Param('storeId', ParseUUIDPipe) storeId: string,
+    @Param('domainId', ParseUUIDPipe) domainId: string,
+  ) {
+    return this.stores.checkDomain(storeId, domainId);
+  }
+
   @Delete(':storeId/domains/:domainId')
   @Roles('store_owner')
   @HttpCode(204)

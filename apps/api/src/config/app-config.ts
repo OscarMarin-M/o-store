@@ -20,6 +20,13 @@ export class AppConfig {
   readonly databaseUrl = required('DATABASE_URL');
   /** Solo para proyectos Supabase antiguos que firman los JWT con secreto compartido (HS256). */
   readonly supabaseJwtSecret = process.env['SUPABASE_JWT_SECRET']?.trim() || null;
+  /** Dominio de la plataforma: cada tienda tiene <slug>.<platformDomain>. */
+  readonly platformDomain = (
+    process.env['PLATFORM_DOMAIN']?.trim() || 'localhost'
+  ).toLowerCase();
+  /** Firma los códigos de verificación de dominios (ver stores/domains.ts). */
+  readonly domainVerifySecret =
+    process.env['DOMAIN_VERIFY_SECRET']?.trim() || this.supabaseSecretKey;
   readonly migrationsDir = resolve(
     process.env['MIGRATIONS_DIR']?.trim() || 'db/migrations',
   );

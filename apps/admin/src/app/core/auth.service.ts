@@ -25,6 +25,8 @@ export class AuthService {
 
   /** Se ejecuta una vez al arrancar la app (provideAppInitializer). */
   async init(): Promise<void> {
+    if (this.client) return;
+    this.unavailable.set(false);
     try {
       const config = await firstValueFrom(
         this.http.get<ClientConfigDto>('/api/public/config'),

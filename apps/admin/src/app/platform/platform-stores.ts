@@ -16,6 +16,7 @@ import {
   type StoreDto,
   type StoreModule,
 } from '@o-stores/contracts';
+import { ConfirmService } from '../core/confirm.service';
 import { StoresService } from '../core/stores.service';
 
 const MODULE_LABELS: Record<StoreModule, string> = {
@@ -51,6 +52,7 @@ function slugify(name: string): string {
 })
 export class PlatformStores {
   protected readonly stores = inject(StoresService);
+  private readonly confirm = inject(ConfirmService);
   protected readonly modules = STORE_MODULES;
   protected readonly moduleLabels = MODULE_LABELS;
 
@@ -120,7 +122,12 @@ export class PlatformStores {
     const enabled = event.checked;
     if (
       !enabled &&
-      !confirm(`¿Deshabilitar «${store.name}»? La tienda dejará de verse en sus dominios hasta que la habilites otra vez.`)
+      !(await this.confirm.ask({
+        title: `¿Deshabilitar ${store.name}?`,
+        message: 'La tienda dejará de verse en todos sus dominios hasta que la habilites otra vez. No se borra nada.',
+        confirmLabel: 'Deshabilitar tienda',
+        destructive: true,
+      }))
     ) {
       event.source.checked = true;
       return;

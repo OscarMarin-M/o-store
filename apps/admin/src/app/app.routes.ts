@@ -17,6 +17,8 @@ const pendingSection: Loader = () =>
 const SECTION_PAGES: Record<string, Loader> = {
   apariencia: () =>
     import('./store/appearance/appearance-page').then((m) => m.AppearancePage),
+  dominios: () =>
+    import('./store/domains/domains-page').then((m) => m.DomainsPage),
 };
 
 export const appRoutes: Route[] = [

@@ -99,6 +99,8 @@ export interface StoreDto {
   enabled: boolean;
   modules: string[];
   schemaName: string;
+  /** Subdominio incluido: <slug>.<dominio de la plataforma>. Siempre activo. */
+  platformDomain: string;
   logoPath: string | null;
   logoUrl: string | null;
   colorPrimary: string;
@@ -115,6 +117,9 @@ export interface StoreDomainDto {
   domain: string;
   isPrimary: boolean;
   verified: boolean;
+  /** Registro TXT que el dueño debe crear para verificar el dominio. */
+  verificationName: string;
+  verificationValue: string;
   createdAt: string;
 }
 

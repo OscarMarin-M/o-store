@@ -5,7 +5,9 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
+import { resolveTxt } from 'node:dns/promises';
 import type {
   CreateDomainInput,
   CreateStoreInput,
@@ -19,6 +21,14 @@ import type {
 import type { Selectable } from 'kysely';
 import { MembershipLookup } from '../auth/membership-lookup';
 import { isUniqueViolation } from '../common/pg-errors';
+import {
+  isPlatformDomain,
+  normalizeHost,
+  platformSlugFromHost,
+  txtRecordsContain,
+  verificationRecordName,
+  verificationToken,
+} from './domains';
 import { AppConfig, STORE_ASSETS_BUCKET } from '../config/app-config';
 import {
   SUPABASE_ADMIN,
@@ -186,7 +196,7 @@ export class StoresService {
       .orderBy('isPrimary', 'desc')
       .orderBy('domain')
       .execute();
-    return rows.map(toDomainDto);
+    return rows.map((row) => toDomainDto(row, this.config.domainVerifySecret));
   }
 
   async addDomain(
@@ -194,6 +204,11 @@ export class StoresService {
     input: CreateDomainInput,
   ): Promise<StoreDomainDto> {
     await this.getRow(storeId);
+    if (isPlatformDomain(input.domain, this.config.platformDomain)) {
+      throw new BadRequestException(
+        'Los subdominios de la plataforma se asignan solos; añade aquí solo un dominio propio',
+      );
+    }
     try {
       const row = await this.db.transaction().execute(async (trx) => {
         if (input.isPrimary) {
@@ -209,7 +224,7 @@ export class StoresService {
           .returningAll()
           .executeTakeFirstOrThrow();
       });
-      return toDomainDto(row);
+      return toDomainDto(row, this.config.domainVerifySecret);
     } catch (error) {
       if (isUniqueViolation(error)) {
         throw new ConflictException('Ese dominio ya está en uso');
@@ -229,6 +244,15 @@ export class StoresService {
     if (input.isPrimary) changes.isPrimary = true;
     if (input.verified !== undefined && isSuperAdmin) {
       changes.verified = input.verified;
+    }
+
+    if (changes.isPrimary && !changes.verified) {
+      const current = await this.getDomainRow(storeId, domainId);
+      if (!current.verified) {
+        throw new BadRequestException(
+          'Solo un dominio verificado puede ser el principal',
+        );
+      }
     }
 
     const row = await this.db.transaction().execute(async (trx) => {
@@ -254,7 +278,60 @@ export class StoresService {
         .executeTakeFirst();
     });
     if (!row) throw new NotFoundException('Dominio no encontrado');
-    return toDomainDto(row);
+    return toDomainDto(row, this.config.domainVerifySecret);
+  }
+
+  /**
+   * Busca en el DNS el TXT de verificación y, si está, marca el dominio como
+   * verificado. Si no, explica qué falta.
+   */
+  async checkDomain(storeId: string, domainId: string): Promise<StoreDomainDto> {
+    const row = await this.getDomainRow(storeId, domainId);
+    if (row.verified) return toDomainDto(row, this.config.domainVerifySecret);
+
+    const name = verificationRecordName(row.domain);
+    const expected = verificationToken(this.config.domainVerifySecret, row.id);
+    let records: string[][] = [];
+    try {
+      records = await this.resolveTxt(name);
+    } catch (error) {
+      const code = (error as { code?: string }).code;
+      if (code !== 'ENOTFOUND' && code !== 'ENODATA') {
+        throw new ServiceUnavailableException(
+          'No se pudo consultar el DNS. Inténtalo en unos minutos',
+        );
+      }
+    }
+    if (!txtRecordsContain(records, expected)) {
+      throw new BadRequestException(
+        records.length
+          ? `El registro ${name} existe pero su valor no coincide. Copia el valor exacto`
+          : `Aún no encontramos el registro ${name}. Los cambios de DNS pueden tardar hasta unas horas`,
+      );
+    }
+    const updated = await this.db
+      .updateTable('platform.storeDomains')
+      .set({ verified: true })
+      .where('id', '=', row.id)
+      .returningAll()
+      .executeTakeFirstOrThrow();
+    return toDomainDto(updated, this.config.domainVerifySecret);
+  }
+
+  /** Separado para poder simularlo en pruebas. */
+  protected resolveTxt(name: string): Promise<string[][]> {
+    return resolveTxt(name);
+  }
+
+  private async getDomainRow(storeId: string, domainId: string): Promise<DomainRow> {
+    const row = await this.db
+      .selectFrom('platform.storeDomains')
+      .selectAll()
+      .where('id', '=', domainId)
+      .where('storeId', '=', storeId)
+      .executeTakeFirst();
+    if (!row) throw new NotFoundException('Dominio no encontrado');
+    return row;
   }
 
   async removeDomain(storeId: string, domainId: string): Promise<void> {
@@ -270,19 +347,31 @@ export class StoresService {
 
   // ---- Público ----
 
-  /** Tienda habilitada cuyo dominio verificado coincide con el host. */
+  /**
+   * Tienda habilitada para un host: primero un dominio propio verificado,
+   * luego el subdominio de la plataforma (<slug>.<platformDomain>).
+   */
   async resolveByHost(host: string): Promise<PublicStoreDto> {
-    const domain = host.trim().toLowerCase().replace(/:\d+$/, '');
-    const row = domain
-      ? await this.db
+    const domain = normalizeHost(host);
+    const slug = platformSlugFromHost(domain, this.config.platformDomain);
+    const row = !domain
+      ? undefined
+      : ((await this.db
           .selectFrom('platform.storeDomains as d')
           .innerJoin('platform.stores as s', 's.id', 'd.storeId')
           .selectAll('s')
           .where('d.domain', '=', domain)
           .where('d.verified', '=', true)
           .where('s.enabled', '=', true)
-          .executeTakeFirst()
-      : undefined;
+          .executeTakeFirst()) ??
+        (slug
+          ? await this.db
+              .selectFrom('platform.stores')
+              .selectAll()
+              .where('slug', '=', slug)
+              .where('enabled', '=', true)
+              .executeTakeFirst()
+          : undefined));
     if (!row) throw new NotFoundException('Tienda no encontrada');
     return {
       id: row.id,
@@ -318,6 +407,7 @@ export class StoresService {
       enabled: row.enabled,
       modules: row.modules,
       schemaName: row.schemaName,
+      platformDomain: `${row.slug}.${this.config.platformDomain}`,
       logoPath: row.logoPath,
       logoUrl: this.config.publicAssetUrl(row.logoPath),
       colorPrimary: row.colorPrimary,
@@ -330,6 +420,11 @@ export class StoresService {
   }
 }
 
-function toDomainDto(row: DomainRow): StoreDomainDto {
-  return { ...row, createdAt: row.createdAt.toISOString() };
+function toDomainDto(row: DomainRow, secret: string): StoreDomainDto {
+  return {
+    ...row,
+    verificationName: verificationRecordName(row.domain),
+    verificationValue: verificationToken(secret, row.id),
+    createdAt: row.createdAt.toISOString(),
+  };
 }
