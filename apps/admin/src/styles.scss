@@ -1,6 +1,7 @@
 @use '@angular/material' as mat;
 @use './app/ui/form/form';
 @use './app/ui/drop';
+@use './app/ui/list/list';
 
 // Tokens del admin (plan aprobado en la skill ui-design). Oscuro por defecto.
 :root {

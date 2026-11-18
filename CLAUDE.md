@@ -10,6 +10,7 @@ Plataforma multitienda: un administrador desde el que se crean y gestionan tiend
 - Antes de crear o rediseñar interfaz: cargar las skills `ui-design` (encargo de Oscar) y `frontend-design` (método, oficial de Anthropic). Modo oscuro por defecto.
 - Al terminar la sesión o tras un push a `main`: ejecutar la skill `session-close`.
 - Pedir confirmación antes de acciones externas (push, crear repos, tocar el proyecto Supabase).
+- Git: cada cambio se hace en su propia rama (`feat/...`, `fix/...`, `docs/...`) y nunca directamente en `main`. Al terminar y comprobar que funciona, se fusiona en `main` y se hace push (con confirmación).
 
 ## Stack
 
@@ -81,6 +82,9 @@ Decisiones de la Fase 2:
 - Catálogo (migración `tenant/base/0002_catalog.sql`): tabla `settings` de una fila por tienda (moneda, prefijo de código). Cada producto tiene un código público único `PREFIJO-0001` (secuencia `product_code_seq`, editable a mano) y sus variantes `PREFIJO-0001-M-NEGRO`; las reglas de códigos están en `libs/shared/contracts/src/codes.ts`. Variantes en `product_variants` (`option_names` en el producto, `option_values` en la variante, precio propio opcional). Precio en `BOB` o `USD` por producto.
 - Tipo de cambio USD→BOB: `ExchangeRateService` con proveedores intercambiables y caché de 6 h; hoy solo el manual (`USD_BOB_RATE`). Falta el proveedor del Banco Central de Bolivia (confirmar su fuente de datos).
 - Productos no se borran: se archivan, para que los pedidos antiguos conserven la referencia.
+- Listas paginadas (rama `feat/listas-paginadas`): contrato `listQuerySchema(sorts, defaults).extend({...})` y `Page<T>` en `contracts/lists.ts` (tamaños 25/50/100; orden declarado por lista, con desempate por `id`). En la API, `paginate()` (`common/paginate.ts`). En el admin, `injectListState` y `listData` (`ui/list`), con el estado en la URL. Por páginas en el admin; las tiendas públicas usarán cursor (scroll infinito). Búsqueda sin tildes con `search_text()` y un índice de trigramas (migración `tenant/base/0003_search.sql`; la expresión de la API y la del índice deben coincidir). Toda lista nueva (pedidos, clientes, atributos) usa este modelo.
+- Dinero: los pedidos se cobran en BOB (el precio en USD de un producto se convierte y se congela en el pedido).
+- Servicios externos (capa genérica con proveedores intercambiables, como `ExchangeRateService`): pago con QR mediante una pasarela externa, y facturación electrónica del SIN mediante una API externa, opcional por tienda. La facturación se deja para más adelante, pero el pedido ya pide NIT o CI y razón social.
 
 Decisiones de la Fase 1:
 
