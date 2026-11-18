@@ -75,6 +75,14 @@ Cuidado con el modo oscuro: "fondo casi negro con un único acento ácido" es un
 - Tema oscuro en `:root`; tema claro bajo `[data-theme="light"]`.
 - Angular Material 21 como base de comportamiento y accesibilidad, con el tema sobrescrito por los tokens propios.
 - Componentes standalone, `OnPush`, signals, control de flujo `@if` / `@for`, SCSS por componente.
+- Piezas genéricas del admin en `apps/admin/src/app/ui/`; se importan juntas con `OS_UI` (`ui/ui.ts`). No rehacerlas por pantalla:
+  - Formularios: nunca campos sueltos ni `mat-form-field`. `os-form-section` (panel con `heading`, `description`, `icon` y cuadrícula de 6 columnas; pie con `osFormActions`). Su encabezado lleva superficie más clara, franja izquierda degradada con los dos colores de la tienda y pastilla del icono; toda sección lleva icono. La etiqueta de cada `os-field` es una pestaña ("etiqueta de precio") pegada al control, teñida con el color secundario y con el principal al escribir; texto siempre del color normal. `os-field` (`label`, `hint` con ejemplo, `error`, `optional`, `span`, `prefix`/`suffix`, `icon`, `labelHidden` para búsquedas y filtros) con `osControl` en el input, select o textarea. Radios y casillas con explicación: `os-choices` / `os-choice` y `os-check` (`form/_form.scss`). Toda etiqueta que no sea obvia lleva una ayuda con ejemplo ("Ej.: …").
+  - Avisos: `os-notice kind="ok|error|info|warning"`, con icono propio; no párrafos coloreados.
+  - Colores: `os-color-input` (muestra + hex) dentro de un `os-field`.
+- Colores de tienda en el admin (acordado con Oscar 2026-11-17): cada tienda tiene dos colores parecidos, principal y secundario (`colorPrimary`, `colorAccent`), elegidos al crearla; el secundario se propone con `similarShade`. En el admin son `--os-store-color` y `--os-store-color-2` y solo dan identidad (franjas, marcas, pestañas de etiqueta). Reservados para componentes, nunca colores de tienda: ámbar (acción principal y foco), rojo (errores, borrar), verde (confirmaciones). `reservedColorIssue` (`contracts/colors.ts`) bloquea lo que se confunde y avisa de lo parecido; lo aplican el admin y la API.
+  - Subida de archivos: clase `os-drop` con `os-drop-icon` (`_drop.scss`).
+  - Iconos: Material Symbols Outlined (paquete `material-symbols`, servido desde el proyecto) con `<mat-icon>nombre</mat-icon>`, 20 px. En botones de texto, icono delante de la acción (add, edit, delete, check para guardar, refresh para reintentar). Botón solo de icono únicamente donde no cabe texto, siempre con `aria-label` y `title`. Icono decorativo con `aria-hidden="true"`. En el menú, cada sección tiene su `icon` en `store-sections.ts`; la activa se rellena (FILL 1).
+  - Solo en el admin y en piezas generales. Las tiendas definen su propia iconografía con su identidad; si usan Material Symbols, servir un subconjunto con los iconos usados (la fuente completa pesa 4 MB).
 
 ## Revisión al terminar una pantalla
 

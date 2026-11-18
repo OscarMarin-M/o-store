@@ -1,0 +1,433 @@
+// Estilos de formulario del admin. Los usan os-form-section, os-field y osControl
+// (ui/form/field.ts); las clases os-choice y os-check sirven para radios y casillas.
+
+// ---- Sección ----
+
+.os-form-section {
+  display: block;
+  container-type: inline-size;
+}
+
+// Encabezado: superficie más clara que el cuerpo (elevación sin sombras) y una
+// franja del color de la tienda activa en el borde izquierdo, como la franja
+// superior del layout. Sin tienda (Plataforma) la franja es del color de línea.
+.os-form-section-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  column-gap: var(--os-space-3);
+  padding: var(--os-space-4) var(--os-space-5);
+  border-bottom: 1px solid var(--os-color-line);
+  border-radius: calc(var(--os-radius-panel) - 1px) calc(var(--os-radius-panel) - 1px) 0 0;
+  // Franja izquierda con los dos colores de la tienda, del principal al secundario.
+  background:
+    linear-gradient(var(--os-store-color), var(--os-store-color-2)) left / 4px 100% no-repeat,
+    var(--os-color-surface-raised);
+
+  h2 {
+    font-size: var(--os-text-lg);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  p {
+    max-width: 70ch;
+    margin: 2px 0 0;
+    color: var(--os-color-text-muted);
+    font-size: var(--os-text-sm);
+  }
+}
+
+.os-form-section-header-icon {
+  grid-template-columns: auto minmax(0, 1fr);
+
+  // Con descripción, el icono ocupa las dos filas (título y descripción).
+  &:has(p) .os-form-section-icon {
+    grid-row: span 2;
+  }
+
+  p {
+    grid-column: 2;
+  }
+}
+
+// Pastilla del icono, teñida con el color de la tienda.
+.os-form-section-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--os-radius-field);
+  background: color-mix(in srgb, var(--os-store-color-2) 26%, var(--os-color-surface));
+  color: var(--os-color-text);
+}
+
+// Seis columnas: un campo ocupa todo, dos tercios, la mitad o un tercio.
+.os-form-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--os-space-5) var(--os-space-4);
+  align-items: start;
+  padding: var(--os-space-5);
+
+  > * {
+    grid-column: 1 / -1;
+  }
+
+  > .os-span-two-thirds {
+    grid-column: span 4;
+  }
+
+  > .os-span-half {
+    grid-column: span 3;
+  }
+
+  > .os-span-third {
+    grid-column: span 2;
+  }
+}
+
+// En un panel estrecho (móvil) cada campo usa la fila entera.
+@container (max-width: 560px) {
+  .os-form-grid > * {
+    grid-column: 1 / -1 !important;
+  }
+
+  .os-form-grid {
+    padding: var(--os-space-4);
+  }
+}
+
+.os-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--os-space-2);
+  padding: var(--os-space-3) var(--os-space-5);
+  border-top: 1px solid var(--os-color-line);
+}
+
+// ---- Campo ----
+
+.os-field {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+
+  > .os-field-message {
+    margin-top: 6px;
+  }
+}
+
+// La etiqueta es una pestaña pegada encima del control, como la etiqueta de precio
+// de un producto: teñida con el color secundario de la tienda y, mientras escribes
+// en el campo, con el principal. El texto siempre es del color normal (contraste AA).
+.os-field-label {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--os-space-1);
+  max-width: 100%;
+  padding: 3px var(--os-space-3) 2px;
+  border: 1px solid var(--os-color-line);
+  border-bottom: 0;
+  border-radius: var(--os-radius-field) var(--os-radius-field) 0 0;
+  background: color-mix(in srgb, var(--os-store-color-2) 16%, var(--os-color-surface-raised));
+  color: var(--os-color-text);
+  font-size: var(--os-text-sm);
+  font-weight: 600;
+  line-height: 1.35;
+  transition: background-color 120ms ease, border-color 120ms ease;
+
+  .os-field:focus-within > & {
+    border-color: var(--os-color-focus);
+    background: color-mix(in srgb, var(--os-store-color) 30%, var(--os-color-surface-raised));
+  }
+
+  .os-field-invalid > & {
+    border-color: var(--os-color-danger);
+  }
+}
+
+// Leyenda de un grupo de opciones: misma pestaña, pero sin control pegado debajo.
+legend.os-field-label {
+  border-bottom: 1px solid var(--os-color-line);
+  border-radius: var(--os-radius-field);
+}
+
+// La esquina del control bajo la pestaña va recta, así se leen como una pieza.
+.os-field:not(.os-field-label-hidden) > .os-field-control {
+  > .os-control,
+  &.os-field-affixed,
+  > .chips {
+    border-top-left-radius: 0;
+  }
+}
+
+.os-field-optional {
+  color: var(--os-color-text-muted);
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
+.os-field-message {
+  max-width: 70ch;
+  margin: 0;
+  color: var(--os-color-text-muted);
+  font-size: var(--os-text-sm);
+  line-height: 1.4;
+}
+
+.os-field-error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--os-space-1);
+  color: var(--os-color-danger);
+
+  .mat-icon.material-symbols-outlined {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
+    margin-top: 1px;
+  }
+}
+
+// ---- Controles ----
+
+.os-control {
+  width: 100%;
+  min-height: 38px;
+  padding: 7px var(--os-space-3);
+  border: 1px solid var(--os-color-line);
+  border-radius: var(--os-radius-field);
+  background: var(--os-color-bg);
+  color: var(--os-color-text);
+  font: inherit;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+
+  &::placeholder {
+    color: var(--os-color-text-muted);
+    opacity: 0.75;
+  }
+
+  &:hover:not(:disabled) {
+    border-color: color-mix(in srgb, var(--os-color-text-muted) 55%, var(--os-color-line));
+  }
+
+  &:focus,
+  &:focus-visible {
+    outline: none;
+    border-color: var(--os-color-focus);
+    box-shadow: 0 0 0 1px var(--os-color-focus);
+  }
+
+  &[aria-invalid='true'] {
+    border-color: var(--os-color-danger);
+
+    &:focus {
+      box-shadow: 0 0 0 1px var(--os-color-danger);
+    }
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  &.num {
+    text-align: right;
+  }
+}
+
+select.os-control {
+  appearance: none;
+  padding-right: 34px;
+  // Flecha dibujada con dos triángulos: toma el color del texto en ambos temas.
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--os-color-text-muted) 50%),
+    linear-gradient(135deg, var(--os-color-text-muted) 50%, transparent 50%);
+  background-position:
+    calc(100% - 17px) 50%,
+    calc(100% - 12px) 50%;
+  background-size: 5px 5px;
+  background-repeat: no-repeat;
+  cursor: pointer;
+}
+
+textarea.os-control {
+  min-height: 110px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+// Prefijo o sufijo fijo ("Bs", "/"): el borde pasa al contenedor.
+.os-field-affixed {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--os-color-line);
+  border-radius: var(--os-radius-field);
+  background: var(--os-color-bg);
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+
+  &:focus-within {
+    border-color: var(--os-color-focus);
+    box-shadow: 0 0 0 1px var(--os-color-focus);
+  }
+
+  .os-field-invalid & {
+    border-color: var(--os-color-danger);
+  }
+
+  .os-control {
+    flex: 1 1 auto;
+    min-width: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+}
+
+// Icono a la izquierda del control: indica qué se escribe (buscar, correo…).
+.os-field-icon.mat-icon {
+  align-self: center;
+  flex: none;
+  margin-left: var(--os-space-3);
+  color: var(--os-color-text-muted);
+
+  & ~ .os-control {
+    padding-left: var(--os-space-2);
+  }
+
+  .os-field-affixed:focus-within & {
+    color: var(--os-color-text);
+  }
+}
+
+.os-field-affix {
+  display: flex;
+  align-items: center;
+  padding: 0 0 0 var(--os-space-3);
+  color: var(--os-color-text-muted);
+  font-size: var(--os-text-sm);
+  white-space: nowrap;
+
+  & ~ .os-control {
+    padding-left: var(--os-space-2);
+  }
+
+  .os-control ~ & {
+    padding: 0 var(--os-space-3) 0 0;
+  }
+}
+
+// ---- Color (os-color-input) ----
+
+.os-color-input {
+  display: flex;
+  gap: var(--os-space-2);
+
+  .os-control {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+}
+
+.os-color-swatch {
+  flex: none;
+  inline-size: 44px;
+  block-size: 38px;
+  padding: 3px;
+  border: 1px solid var(--os-color-line);
+  border-radius: var(--os-radius-field);
+  background: var(--os-color-bg);
+  cursor: pointer;
+
+  // Bajo la pestaña de la etiqueta, como los demás controles.
+  .os-field:not(.os-field-label-hidden) & {
+    border-top-left-radius: 0;
+  }
+
+  &::-webkit-color-swatch-wrapper {
+    padding: 0;
+  }
+
+  &::-webkit-color-swatch,
+  &::-moz-color-swatch {
+    border: 0;
+    border-radius: 2px;
+  }
+}
+
+// ---- Grupos de opciones ----
+
+.os-fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+
+  > legend {
+    margin-bottom: 6px;
+    padding: 0;
+  }
+}
+
+// Opción en tarjeta: título y explicación, para elegir entre pocas alternativas.
+.os-choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--os-space-3);
+}
+
+.os-choice,
+.os-check {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 2px var(--os-space-3);
+  align-items: start;
+  cursor: pointer;
+
+  input {
+    grid-row: span 2;
+    width: 16px;
+    height: 16px;
+    margin: 2px 0 0;
+    accent-color: var(--os-color-accent);
+  }
+
+  strong {
+    font-weight: 600;
+  }
+
+  small {
+    color: var(--os-color-text-muted);
+    font-size: var(--os-text-sm);
+  }
+}
+
+.os-choice {
+  padding: var(--os-space-3) var(--os-space-4);
+  border: 1px solid var(--os-color-line);
+  border-radius: var(--os-radius-field);
+  background: var(--os-color-bg);
+  transition: border-color 120ms ease;
+
+  &:hover {
+    border-color: color-mix(in srgb, var(--os-color-text-muted) 55%, var(--os-color-line));
+  }
+
+  &:has(input:checked) {
+    border-color: var(--os-color-text);
+    background: var(--os-color-surface-raised);
+  }
+
+  &:has(input:focus-visible) {
+    outline: 2px solid var(--os-color-focus);
+    outline-offset: 2px;
+  }
+
+  input:focus-visible {
+    outline: none;
+  }
+}

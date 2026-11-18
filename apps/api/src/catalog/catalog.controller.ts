@@ -1,7 +1,9 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  HttpCode,
   Param,
   ParseUUIDPipe,
   Patch,
@@ -10,6 +12,10 @@ import {
   Query,
 } from '@nestjs/common';
 import {
+  categoryInputSchema,
+  reorderCategoriesSchema,
+  type CategoryInput,
+  type ReorderCategoriesInput,
   productImageUploadSchema,
   productInputSchema,
   productListQuerySchema,
@@ -23,6 +29,7 @@ import {
 } from '@o-stores/contracts';
 import { Public, Roles } from '../auth/decorators';
 import { ZodBody } from '../common/zod-body.pipe';
+import { CategoriesService } from './categories.service';
 import { ExchangeRateService } from './exchange-rate.service';
 import { ProductsService } from './products.service';
 
@@ -101,6 +108,56 @@ export class CatalogController {
     @Body(new ZodBody(setProductStatusSchema)) body: SetProductStatusInput,
   ) {
     return this.products.setStatus(storeId, productId, body.status);
+  }
+}
+
+@Controller('stores/:storeId/categories')
+export class CategoriesController {
+  constructor(private readonly categories: CategoriesService) {}
+
+  @Get()
+  @Roles('store_owner', 'store_staff')
+  list(@Param('storeId', ParseUUIDPipe) storeId: string) {
+    return this.categories.list(storeId);
+  }
+
+  @Post()
+  @Roles('store_owner', 'store_staff')
+  create(
+    @Param('storeId', ParseUUIDPipe) storeId: string,
+    @Body(new ZodBody(categoryInputSchema)) body: CategoryInput,
+  ) {
+    return this.categories.create(storeId, body);
+  }
+
+  /** Antes que ':categoryId' para que 'order' no se tome como id. */
+  @Put('order')
+  @Roles('store_owner', 'store_staff')
+  reorder(
+    @Param('storeId', ParseUUIDPipe) storeId: string,
+    @Body(new ZodBody(reorderCategoriesSchema)) body: ReorderCategoriesInput,
+  ) {
+    return this.categories.reorder(storeId, body.ids);
+  }
+
+  @Put(':categoryId')
+  @Roles('store_owner', 'store_staff')
+  update(
+    @Param('storeId', ParseUUIDPipe) storeId: string,
+    @Param('categoryId', ParseUUIDPipe) categoryId: string,
+    @Body(new ZodBody(categoryInputSchema)) body: CategoryInput,
+  ) {
+    return this.categories.update(storeId, categoryId, body);
+  }
+
+  @Delete(':categoryId')
+  @HttpCode(204)
+  @Roles('store_owner', 'store_staff')
+  remove(
+    @Param('storeId', ParseUUIDPipe) storeId: string,
+    @Param('categoryId', ParseUUIDPipe) categoryId: string,
+  ) {
+    return this.categories.remove(storeId, categoryId);
   }
 }
 

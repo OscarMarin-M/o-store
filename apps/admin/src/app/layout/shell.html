@@ -1,6 +1,7 @@
 <div
   class="shell"
   [style.--os-store-color]="stores.active()?.colorPrimary ?? null"
+  [style.--os-store-color-2]="stores.active()?.colorAccent ?? null"
 >
   <header class="topbar">
     <a class="brand" routerLink="/">O-stores</a>
@@ -12,6 +13,7 @@
       aria-controls="os-nav"
       (click)="menuOpen.set(!menuOpen())"
     >
+      <mat-icon aria-hidden="true">{{ menuOpen() ? 'close' : 'menu' }}</mat-icon>
       Menú
     </button>
   </header>
@@ -23,6 +25,7 @@
       <div class="group">
         <h2 class="group-title">Plataforma</h2>
         <a class="link" routerLink="/plataforma/tiendas" routerLinkActive="active">
+          <mat-icon aria-hidden="true">storefront</mat-icon>
           Gestionar tiendas
         </a>
       </div>
@@ -36,7 +39,10 @@
         }
         @case ('error') {
           <p class="hint os-error">No se pudieron cargar.</p>
-          <button type="button" class="link" (click)="stores.load()">Reintentar</button>
+          <button type="button" class="link" (click)="stores.load()">
+            <mat-icon aria-hidden="true">refresh</mat-icon>
+            Reintentar
+          </button>
         }
         @default {
           @for (store of stores.stores(); track store.id) {
@@ -45,6 +51,7 @@
               [routerLink]="['/tienda', store.id]"
               routerLinkActive="active"
               [style.--mark]="store.colorPrimary"
+              [style.--mark-2]="store.colorAccent"
             >
               <span class="mark" aria-hidden="true"></span>
               <span class="store-name">{{ store.name }}</span>
@@ -68,6 +75,7 @@
             [routerLink]="['/tienda', store.id, section.path]"
             routerLinkActive="active"
           >
+            <mat-icon aria-hidden="true">{{ section.icon }}</mat-icon>
             {{ section.label }}
           </a>
         }
@@ -77,9 +85,13 @@
     <div class="account">
       <span class="os-muted email">{{ auth.me()?.email }}</span>
       <button type="button" class="link" (click)="theme.toggle()">
+        <mat-icon aria-hidden="true">{{ theme.mode() === 'dark' ? 'light_mode' : 'dark_mode' }}</mat-icon>
         {{ theme.mode() === 'dark' ? 'Usar tema claro' : 'Usar tema oscuro' }}
       </button>
-      <button type="button" class="link" (click)="signOut()">Cerrar sesión</button>
+      <button type="button" class="link" (click)="signOut()">
+        <mat-icon aria-hidden="true">logout</mat-icon>
+        Cerrar sesión
+      </button>
     </div>
   </nav>
 

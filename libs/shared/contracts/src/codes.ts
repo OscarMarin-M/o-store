@@ -19,14 +19,19 @@ export function variantCode(productCode: string, optionValues: string[]): string
   return [productCode, ...parts].join('-').slice(0, 60);
 }
 
-/** Dirección de un producto: nombre + código, única porque el código lo es. */
-export function productSlug(name: string, code: string): string {
-  const base = name
+/** Texto a dirección web: "Cartas Sueltas Ñ" → "cartas-sueltas-n". */
+export function slugify(value: string, max = 80): string {
+  return value
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
-    .slice(0, 80);
-  return [base, code.toLowerCase()].filter(Boolean).join('-');
+    .slice(0, max)
+    .replace(/-+$/, '');
+}
+
+/** Dirección de un producto: nombre + código, única porque el código lo es. */
+export function productSlug(name: string, code: string): string {
+  return [slugify(name), code.toLowerCase()].filter(Boolean).join('-');
 }

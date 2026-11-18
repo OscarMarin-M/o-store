@@ -18,7 +18,7 @@ import type {
 } from '@o-stores/contracts';
 import { sql, type Selectable, type Transaction } from 'kysely';
 import { randomUUID } from 'node:crypto';
-import { isUniqueViolation } from '../common/pg-errors';
+import { isForeignKeyViolation, isUniqueViolation } from '../common/pg-errors';
 import { AppConfig, STORE_ASSETS_BUCKET } from '../config/app-config';
 import { SUPABASE_ADMIN, type SupabaseAdmin } from '../database/database.module';
 import type { ProductVariantsTable, ProductsTable, TenantDB } from '../database/types';
@@ -77,6 +77,18 @@ export class ProductsService {
         eb.or([eb('p.name', 'ilike', term), eb('p.code', 'ilike', term)]),
       );
     }
+    if (query.categoryId === 'none') {
+      base = base.where('p.categoryId', 'is', null);
+    } else if (query.categoryId) {
+      const id = query.categoryId;
+      // La categoría y sus subcategorías.
+      base = base.where((eb) =>
+        eb.or([
+          eb('p.categoryId', '=', id),
+          eb('p.categoryId', 'in', eb.selectFrom('categories').select('id').where('parentId', '=', id)),
+        ]),
+      );
+    }
 
     const [{ total }, rows] = await Promise.all([
       base.select((eb) => eb.fn.countAll<string>().as('total')).executeTakeFirstOrThrow(),
@@ -90,6 +102,7 @@ export class ProductsService {
           'p.priceCurrency',
           'p.stock',
           'p.images',
+          'p.categoryId',
           'p.updatedAt',
         ])
         .select((eb) => [
@@ -122,6 +135,7 @@ export class ProductsService {
           priceCurrency: r.priceCurrency,
           totalStock: variantCount ? Number(r.variantStock ?? 0) : r.stock,
           variantCount,
+          categoryId: r.categoryId,
           coverUrl: this.config.publicAssetUrl(r.images[0] ?? null),
           updatedAt: r.updatedAt.toISOString(),
         };
@@ -311,6 +325,9 @@ export class ProductsService {
             ? 'Dos variantes producen el mismo código; cambia alguno de sus valores'
             : `El código ${input.code ?? ''} ya lo usa otro producto; elige otro`,
         );
+      }
+      if (isForeignKeyViolation(error)) {
+        throw new BadRequestException('La categoría elegida ya no existe; elige otra');
       }
       throw error;
     }

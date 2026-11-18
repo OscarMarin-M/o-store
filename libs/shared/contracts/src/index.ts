@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { reservedColorIssue } from './colors';
 
 // ---- Roles ----
 
@@ -21,6 +22,12 @@ const hexColor = z
   .string()
   .regex(/^#[0-9a-fA-F]{6}$/, 'Color hexadecimal de 6 dígitos, por ejemplo #1a2b3c');
 
+/** Color de marca (principal o secundario): además, no puede confundirse con uno reservado. */
+const brandColor = hexColor.superRefine((value, ctx) => {
+  const issue = reservedColorIssue(value);
+  if (issue?.level === 'blocked') ctx.addIssue({ code: 'custom', message: issue.message });
+});
+
 const modules = z
   .array(z.enum(STORE_MODULES))
   .transform((list) => [...new Set(list)]);
@@ -34,14 +41,17 @@ export const createStoreSchema = z.strictObject({
       'De 3 a 40 caracteres: minúsculas, números y guiones; empieza con letra',
     ),
   modules: modules.default([]),
+  /** Vacíos = DEFAULT_STORE_PRIMARY y un tono parecido. */
+  colorPrimary: brandColor.optional(),
+  colorAccent: brandColor.optional(),
 });
 export type CreateStoreInput = z.infer<typeof createStoreSchema>;
 
 export const updateStoreSchema = z.strictObject({
   name: z.string().trim().min(1).max(80).optional(),
   logoPath: z.string().max(300).nullable().optional(),
-  colorPrimary: hexColor.optional(),
-  colorAccent: hexColor.optional(),
+  colorPrimary: brandColor.optional(),
+  colorAccent: brandColor.optional(),
   colorBackground: hexColor.optional(),
   theme: z.record(z.string(), z.unknown()).optional(),
 });
@@ -243,6 +253,8 @@ export type ProductInput = z.infer<typeof productInputSchema>;
 export const productListQuerySchema = z.object({
   q: z.string().trim().max(100).optional(),
   status: z.enum(PRODUCT_STATUSES).optional(),
+  /** Id de categoría (incluye sus subcategorías) o 'none' para los que no tienen. */
+  categoryId: z.union([z.uuid(), z.literal('none')]).optional(),
   page: z.coerce.number().int().min(1).default(1),
 });
 export type ProductListQuery = z.infer<typeof productListQuerySchema>;
@@ -309,6 +321,7 @@ export interface ProductListItemDto {
   /** Stock del producto o suma de sus variantes. */
   totalStock: number;
   variantCount: number;
+  categoryId: string | null;
   coverUrl: string | null;
   updatedAt: string;
 }
@@ -337,4 +350,39 @@ export interface ExchangeRateDto {
 
 export const setProductStatusSchema = z.strictObject({ status: z.enum(PRODUCT_STATUSES) });
 export type SetProductStatusInput = z.infer<typeof setProductStatusSchema>;
+
+// ---- Categorías ----
+
+const categorySlug = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'Solo minúsculas, números y guiones, sin espacios')
+  .max(80);
+
+/** Dos niveles: categoría y subcategoría (parentId apunta a una de primer nivel). */
+export const categoryInputSchema = z.strictObject({
+  name: z.string().trim().min(1, 'Escribe el nombre').max(80),
+  /** Vacío = se genera desde el nombre. */
+  slug: categorySlug.optional(),
+  parentId: z.uuid().nullable().default(null),
+});
+export type CategoryInput = z.infer<typeof categoryInputSchema>;
+
+/** Nuevo orden de las categorías hermanas (mismo padre), de primera a última. */
+export const reorderCategoriesSchema = z.strictObject({
+  ids: z.array(z.uuid()).min(1).max(500),
+});
+export type ReorderCategoriesInput = z.infer<typeof reorderCategoriesSchema>;
+
+export interface CategoryDto {
+  id: string;
+  name: string;
+  slug: string;
+  parentId: string | null;
+  position: number;
+  /** Productos no archivados asignados directamente a esta categoría. */
+  productCount: number;
+}
 export * from './codes';
+export * from './colors';

@@ -1,0 +1,137 @@
+@if (store(); as store) {
+  <header class="os-page-header">
+    <h1>Categorías</h1>
+    @if (!draft()) {
+      <button mat-flat-button class="os-primary" type="button" (click)="startCreate()">
+        <mat-icon>add</mat-icon>
+        Nueva categoría
+      </button>
+    }
+  </header>
+
+  <p class="intro os-muted">
+    Ordenan los productos en el menú de la tienda. Dentro de una categoría puedes crear subcategorías,
+    por ejemplo «Yu-Gi-Oh» y dentro «Sobres» y «Cartas sueltas».
+  </p>
+
+  @if (draft(); as d) {
+    <form class="editor" (ngSubmit)="save()" novalidate>
+      <os-form-section icon="category" [heading]="d.id ? 'Editar categoría' : 'Nueva categoría'">
+        <os-field label="Nombre" span="half" hint="Corto y claro, como en un menú. Ej.: Yu-Gi-Oh, Sobres, Poleras oversize." [error]="errors()['name']">
+          <input #nameInput osControl name="name" maxlength="80" autocomplete="off" [ngModel]="d.name" (ngModelChange)="patchDraft({ name: $event })" />
+        </os-field>
+
+        <os-field
+          label="Dentro de"
+          span="half"
+          [hint]="d.hasChildren ? 'Tiene subcategorías, así que sigue siendo principal.' : 'Elige una categoría para que esta sea una subcategoría suya.'"
+          [error]="errors()['parentId']"
+        >
+          <select osControl name="parent" [disabled]="d.hasChildren" [ngModel]="d.parentId" (ngModelChange)="patchDraft({ parentId: $event })">
+            <option [ngValue]="null">Ninguna: es una categoría principal</option>
+            @for (p of parentOptions(); track p.id) {
+              <option [ngValue]="p.id">{{ p.name }}</option>
+            }
+          </select>
+        </os-field>
+
+        <os-field
+          label="Dirección web"
+          span="half"
+          prefix="/"
+          [optional]="!d.id"
+          [hint]="d.id ? 'Cambiarla rompe los enlaces que ya hayas compartido.' : 'Vacía, se crea desde el nombre: ' + slugPreview()"
+          [error]="errors()['slug']"
+        >
+          <input osControl name="slug" class="os-mono" maxlength="80" spellcheck="false" autocomplete="off" [placeholder]="d.id ? '' : slugPreview()" [ngModel]="d.slug" (ngModelChange)="patchDraft({ slug: $event.toLowerCase() })" />
+        </os-field>
+
+        <div osFormActions class="os-form-actions">
+          @if (errors()['form']; as e) {
+            <p class="os-error form-error" role="alert">{{ e }}</p>
+          }
+          <button mat-button type="button" (click)="draft.set(null)">Cancelar</button>
+          <button mat-flat-button class="os-primary" type="submit" [disabled]="saving()">
+            <mat-icon>check</mat-icon>
+            {{ saving() ? 'Guardando…' : d.id ? 'Guardar cambios' : 'Crear categoría' }}
+          </button>
+        </div>
+      </os-form-section>
+    </form>
+  }
+
+  @if (notice(); as n) {
+    <os-notice class="notice" [kind]="n.kind">{{ n.text }}</os-notice>
+  }
+
+  @switch (status()) {
+    @case ('loading') {
+      <p class="os-muted">Cargando categorías…</p>
+    }
+    @case ('error') {
+      <os-notice kind="error">
+        No se pudieron cargar las categorías.
+        <button mat-button type="button" (click)="retry()"><mat-icon>refresh</mat-icon>Reintentar</button>
+      </os-notice>
+    }
+    @default {
+      @if (tree().length) {
+        <ul class="os-panel tree">
+          @for (c of tree(); track c.id; let i = $index, first = $first, last = $last) {
+            <li class="group">
+              <ng-container
+                *ngTemplateOutlet="row; context: { $implicit: c, siblings: tree(), index: i, first, last, count: total(c), node: c }"
+              />
+              @if (c.children.length) {
+                <ul class="children" [attr.aria-label]="'Subcategorías de ' + c.name">
+                  @for (s of c.children; track s.id; let j = $index, sFirst = $first, sLast = $last) {
+                    <li>
+                      <ng-container
+                        *ngTemplateOutlet="row; context: { $implicit: s, siblings: c.children, index: j, first: sFirst, last: sLast, count: s.productCount, node: null }"
+                      />
+                    </li>
+                  }
+                </ul>
+              }
+            </li>
+          }
+        </ul>
+      } @else if (!draft()) {
+        <div class="empty">
+          <p>{{ store.name }} aún no tiene categorías.</p>
+          <button mat-button type="button" (click)="startCreate()"><mat-icon>add</mat-icon>Crear la primera</button>
+        </div>
+      }
+    }
+  }
+
+  <ng-template #row let-c let-siblings="siblings" let-index="index" let-first="first" let-last="last" let-count="count" let-node="node">
+    <div class="row" [class.sub]="!node" [attr.aria-busy]="busyId() === c.id">
+      <div class="order">
+        <button type="button" class="step" [disabled]="first || !!busyId()" [attr.aria-label]="'Subir ' + c.name" (click)="move(siblings, index, -1)">
+          <mat-icon aria-hidden="true">keyboard_arrow_up</mat-icon>
+        </button>
+        <button type="button" class="step" [disabled]="last || !!busyId()" [attr.aria-label]="'Bajar ' + c.name" (click)="move(siblings, index, 1)">
+          <mat-icon aria-hidden="true">keyboard_arrow_down</mat-icon>
+        </button>
+      </div>
+      @if (!node) {
+        <mat-icon class="sub-mark" aria-hidden="true">subdirectory_arrow_right</mat-icon>
+      }
+      <div class="main">
+        <span class="name">{{ c.name }}</span>
+        <span class="slug os-mono os-muted">{{ c.slug }}</span>
+      </div>
+      <a class="count" [routerLink]="['/tienda', store.id, 'productos']" [queryParams]="{ categoria: c.id }">
+        {{ count === 1 ? '1 producto' : count + ' productos' }}
+      </a>
+      <div class="actions">
+        @if (node) {
+          <button mat-button type="button" (click)="startCreate(c.id)"><mat-icon>add</mat-icon>Subcategoría</button>
+        }
+        <button mat-button type="button" (click)="startEdit(c, !!node?.children.length)"><mat-icon>edit</mat-icon>Editar</button>
+        <button mat-button type="button" [disabled]="busyId() === c.id" (click)="remove(node ?? c)"><mat-icon>delete</mat-icon>Borrar</button>
+      </div>
+    </div>
+  </ng-template>
+}

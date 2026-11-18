@@ -1,0 +1,155 @@
+p {
+  margin: 0;
+}
+
+.intro {
+  max-width: 68ch;
+  margin: calc(-1 * var(--os-space-3)) 0 var(--os-space-5);
+}
+
+.notice {
+  margin-bottom: var(--os-space-4);
+}
+
+// Marca de subcategoría, entre las flechas de orden y el nombre.
+.sub-mark {
+  margin-left: calc(-1 * var(--os-space-2));
+  color: var(--os-color-text-muted);
+}
+
+.editor {
+  max-width: 900px;
+  margin-bottom: var(--os-space-5);
+}
+
+// Error que no es de un campo concreto: a la izquierda de los botones.
+.form-error {
+  flex: 1 1 240px;
+  align-self: center;
+  font-size: var(--os-text-sm);
+}
+
+// ---- Árbol ----
+
+.tree,
+.children {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tree {
+  max-width: 900px;
+}
+
+.group {
+  border-bottom: 1px solid var(--os-color-line);
+
+  &:last-child {
+    border-bottom: 0;
+  }
+}
+
+// Las subcategorías cuelgan de una guía vertical: se ve a qué categoría pertenecen.
+.children {
+  margin: 0 0 var(--os-space-3) calc(var(--os-space-4) + 14px);
+  border-left: 1px solid var(--os-color-line);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--os-space-2) var(--os-space-4);
+  padding: var(--os-space-3) var(--os-space-4);
+
+  &.sub {
+    padding-block: var(--os-space-2);
+  }
+}
+
+.order {
+  display: flex;
+  flex-direction: column;
+}
+
+.step {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--os-radius-field);
+  background: none;
+  color: var(--os-color-text-muted);
+  font: inherit;
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: var(--os-color-surface-raised);
+    color: var(--os-color-text);
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+}
+
+.main {
+  flex: 1 1 200px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+
+  .sub & {
+    font-weight: 400;
+  }
+}
+
+.slug {
+  font-size: var(--os-text-sm);
+  overflow-wrap: anywhere;
+}
+
+.count {
+  min-width: 9ch;
+  color: var(--os-color-text-muted);
+  font-size: var(--os-text-sm);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+
+  &:hover {
+    color: var(--os-color-text);
+  }
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--os-space-1);
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--os-space-2);
+}
+
+@media (max-width: 600px) {
+  .children {
+    margin-left: var(--os-space-3);
+  }
+
+  .count {
+    text-align: left;
+  }
+}

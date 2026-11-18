@@ -1,4 +1,6 @@
 @use '@angular/material' as mat;
+@use './app/ui/form/form';
+@use './app/ui/drop';
 
 // Tokens del admin (plan aprobado en la skill ui-design). Oscuro por defecto.
 :root {
@@ -14,8 +16,11 @@
   --os-color-success: #7cc6a0;
   --os-color-focus: #e9b949;
 
-  // Color de la tienda activa; el layout lo reemplaza por el de la tienda.
+  // Colores de la tienda activa (principal y secundario); el layout los reemplaza.
+  // Solo se usan como identidad: franjas, marcas y etiquetas. Nunca para botones,
+  // errores ni confirmaciones, que tienen sus colores reservados (contracts/colors.ts).
   --os-store-color: var(--os-color-line);
+  --os-store-color-2: var(--os-store-color);
 
   --os-font-sans: 'Atkinson Hyperlegible Next', system-ui, sans-serif;
   --os-font-mono: 'Atkinson Hyperlegible Mono', ui-monospace, monospace;
@@ -110,6 +115,15 @@ a {
 :focus-visible {
   outline: 2px solid var(--os-color-focus);
   outline-offset: 2px;
+}
+
+// Material Symbols a 20 px (el tamaño del texto del admin), trazo normal y sin relleno.
+.mat-icon.material-symbols-outlined {
+  width: 20px;
+  height: 20px;
+  font-size: 20px;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+  vertical-align: middle;
 }
 
 .os-mono {

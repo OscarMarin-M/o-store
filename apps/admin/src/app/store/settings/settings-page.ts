@@ -13,65 +13,64 @@ import { CURRENCIES, updateStoreSettingsSchema, type Currency } from '@o-stores/
 import { apiMessage } from '../../core/api-error';
 import { CURRENCY_LABELS } from '../../core/money';
 import { StoresService } from '../../core/stores.service';
+import { OS_UI } from '../../ui/ui';
 import { ProductsApi } from '../products/products-api';
 
 @Component({
   selector: 'os-settings-page',
-  imports: [FormsModule, MatButtonModule],
+  imports: [FormsModule, MatButtonModule, OS_UI],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <header class="os-page-header">
       <h1>Ajustes</h1>
       <button mat-flat-button class="os-primary" type="button" [disabled]="saving() || state() !== 'ready'" (click)="save()">
+        <mat-icon>check</mat-icon>
         {{ saving() ? 'Guardando…' : 'Guardar ajustes' }}
       </button>
     </header>
 
     @if (message(); as m) {
-      <p class="message" [class.os-error]="m.kind === 'error'" [class.ok]="m.kind === 'ok'" role="status">{{ m.text }}</p>
+      <os-notice class="message" [kind]="m.kind">{{ m.text }}</os-notice>
     }
 
     @switch (state()) {
       @case ('loading') { <p class="os-muted">Cargando ajustes…</p> }
-      @case ('error') { <p class="os-error">No se pudieron cargar los ajustes. Recarga la página.</p> }
+      @case ('error') { <os-notice kind="error">No se pudieron cargar los ajustes. Recarga la página.</os-notice> }
       @default {
-        <section class="os-panel block">
-          <div class="field">
-            <label for="s-currency">Moneda de la tienda</label>
-            <select id="s-currency" [ngModel]="currency()" (ngModelChange)="currency.set($event)">
-              @for (c of currencies; track c) {
-                <option [value]="c">{{ labels[c] }}</option>
-              }
-            </select>
-            <p class="hint">En esta moneda se muestran los totales del carrito. Cada producto puede tener su precio en bolivianos o en dólares.</p>
-          </div>
-          <div class="field">
-            <label for="s-prefix">Prefijo de los códigos</label>
-            <input id="s-prefix" class="os-mono" maxlength="8" spellcheck="false" [ngModel]="prefix()" (ngModelChange)="prefix.set($event.toUpperCase())" [attr.aria-invalid]="!!prefixError()" />
-            @if (prefixError(); as e) {
-              <p class="field-error">{{ e }}</p>
-            } @else {
-              <p class="hint">Los productos nuevos se numeran como {{ prefix() || 'P' }}-0001. Los que ya existen conservan su código.</p>
-            }
-          </div>
-        </section>
+        <form class="sections" (ngSubmit)="save()" novalidate>
+          <os-form-section heading="Precios" icon="payments" description="Cómo se muestran los importes en la tienda.">
+            <os-field
+              label="Moneda de la tienda"
+              span="half"
+              hint="En ella se muestran los totales del carrito. Cada producto puede tener su precio en bolivianos o en dólares."
+            >
+              <select osControl name="currency" [ngModel]="currency()" (ngModelChange)="currency.set($event)">
+                @for (c of currencies; track c) {
+                  <option [value]="c">{{ labels[c] }}</option>
+                }
+              </select>
+            </os-field>
+          </os-form-section>
+
+          <os-form-section heading="Códigos de producto" icon="qr_code_2" description="El código con el que tus clientes te piden un producto por WhatsApp o en la tienda.">
+            <os-field
+              label="Prefijo"
+              span="third"
+              suffix="-0001"
+              [hint]="'Ej.: TCG o POL. Los productos nuevos se numeran ' + (prefix() || 'P') + '-0001, ' + (prefix() || 'P') + '-0002… Los que ya existen conservan su código.'"
+              [error]="prefixError()"
+            >
+              <input osControl name="prefix" class="os-mono" maxlength="8" spellcheck="false" autocomplete="off" [ngModel]="prefix()" (ngModelChange)="prefix.set($event.toUpperCase())" />
+            </os-field>
+          </os-form-section>
+        </form>
       }
     }
   `,
   styles: `
     p { margin: 0; }
     .message { margin-bottom: var(--os-space-4); }
-    .ok { color: var(--os-color-success); }
-    .block { display: flex; flex-direction: column; gap: var(--os-space-5); max-width: 560px; padding: var(--os-space-5); }
-    .field { display: flex; flex-direction: column; gap: var(--os-space-1); }
-    label { font-weight: 600; font-size: var(--os-text-sm); }
-    input, select {
-      max-width: 280px; padding: 8px var(--os-space-3); border: 1px solid var(--os-color-line);
-      border-radius: var(--os-radius-field); background: var(--os-color-bg); color: inherit; font: inherit;
-    }
-    input[aria-invalid='true'] { border-color: var(--os-color-danger); }
-    .hint { color: var(--os-color-text-muted); font-size: var(--os-text-sm); max-width: 60ch; }
-    .field-error { color: var(--os-color-danger); font-size: var(--os-text-sm); }
+    .sections { display: flex; flex-direction: column; gap: var(--os-space-4); max-width: 760px; }
   `,
 })
 export class SettingsPage {

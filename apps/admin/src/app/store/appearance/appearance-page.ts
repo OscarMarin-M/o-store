@@ -9,8 +9,10 @@ import {
   untracked,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { OS_UI } from '../../ui/ui';
 import type { LogoUploadInput } from '@o-stores/contracts';
 import { StoresService } from '../../core/stores.service';
+import { reservedColorIssue } from '@o-stores/contracts';
 import { readableTextOn, themeWarnings, type ThemeColors } from './contrast';
 import { uploadWithProgress, type UploadHandle } from '../../core/upload';
 
@@ -33,7 +35,7 @@ interface LogoUpload {
 
 @Component({
   selector: 'os-appearance-page',
-  imports: [MatButtonModule],
+  imports: [MatButtonModule, OS_UI],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './appearance-page.html',
   styleUrl: './appearance-page.scss',
@@ -44,8 +46,8 @@ export class AppearancePage implements OnDestroy {
   protected readonly store = computed(() => this.stores.active());
 
   protected readonly colorFields: { key: ColorKey; label: string; hint: string }[] = [
-    { key: 'colorPrimary', label: 'Principal', hint: 'Botones y enlaces' },
-    { key: 'colorAccent', label: 'Acento', hint: 'Etiquetas y detalles' },
+    { key: 'colorPrimary', label: 'Color principal', hint: 'Botones, enlaces y la franja del panel' },
+    { key: 'colorAccent', label: 'Color secundario', hint: 'Un tono parecido: etiquetas y detalles' },
     { key: 'colorBackground', label: 'Fondo', hint: 'Fondo de las páginas' },
   ];
 
@@ -63,7 +65,18 @@ export class AppearancePage implements OnDestroy {
 
   private upload: UploadHandle | null = null;
 
-  protected readonly warnings = computed(() => themeWarnings(this.colors()));
+  protected readonly warnings = computed(() => {
+    const c = this.colors();
+    const reserved = (['colorPrimary', 'colorAccent'] as const)
+      .map((key) => reservedColorIssue(c[key]))
+      .filter((issue) => issue?.level === 'warning')
+      .map((issue) => `${issue?.message}.`);
+    return [...themeWarnings(c), ...reserved];
+  });
+  /** Hay un color que no se puede guardar (hex mal escrito o color reservado). */
+  protected readonly hasColorErrors = computed(() =>
+    Object.values(this.hexErrors()).some(Boolean),
+  );
   protected readonly textOnPrimary = computed(() => readableTextOn(this.colors().colorPrimary));
   protected readonly textOnBackground = computed(() =>
     readableTextOn(this.colors().colorBackground),
@@ -105,12 +118,17 @@ export class AppearancePage implements OnDestroy {
     this.revokePreview();
     this.logo.set(null);
     this.logoError.set(null);
-    this.hexErrors.set({});
     this.colors.set({
       colorPrimary: store.colorPrimary,
       colorAccent: store.colorAccent,
       colorBackground: store.colorBackground,
     });
+    // Una tienda creada antes de la regla puede tener un color reservado: se avisa al abrir.
+    const blocked = (key: 'colorPrimary' | 'colorAccent') => {
+      const issue = reservedColorIssue(store[key]);
+      return issue?.level === 'blocked' ? `${issue.message}.` : undefined;
+    };
+    this.hexErrors.set({ colorPrimary: blocked('colorPrimary'), colorAccent: blocked('colorAccent') });
   }
 
   protected setColor(key: ColorKey, raw: string): void {
@@ -120,7 +138,12 @@ export class AppearancePage implements OnDestroy {
       this.hexErrors.update((e) => ({ ...e, [key]: 'Usa 6 dígitos hexadecimales, por ejemplo #1a2b3c.' }));
       return;
     }
-    this.hexErrors.update((e) => ({ ...e, [key]: undefined }));
+    // El fondo no tiene restricción; los colores de marca no pueden imitar a los reservados.
+    const issue = key === 'colorBackground' ? null : reservedColorIssue(hex);
+    this.hexErrors.update((e) => ({
+      ...e,
+      [key]: issue?.level === 'blocked' ? `${issue.message}.` : undefined,
+    }));
     this.colors.update((c) => ({ ...c, [key]: hex }));
     this.message.set(null);
   }

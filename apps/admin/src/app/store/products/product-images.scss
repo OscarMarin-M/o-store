@@ -8,38 +8,6 @@ p {
   margin: 0;
 }
 
-.drop {
-  display: flex;
-  flex-direction: column;
-  gap: var(--os-space-1);
-  padding: var(--os-space-4);
-  border: 1px dashed var(--os-color-line);
-  border-radius: var(--os-radius-field);
-  cursor: pointer;
-
-  &.dragging,
-  &:hover {
-    border-color: var(--os-color-accent);
-    background: var(--os-color-surface-raised);
-  }
-
-  &:focus-within {
-    outline: 2px solid var(--os-color-focus);
-    outline-offset: 2px;
-  }
-
-  input {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    opacity: 0;
-  }
-
-  .os-muted {
-    font-size: var(--os-text-sm);
-  }
-}
-
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -93,6 +61,13 @@ progress {
 .item-actions {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
+  // Botones de solo icono, más compactos dentro de la miniatura.
+  --mat-icon-button-state-layer-size: 32px;
+
+  button {
+    padding: 4px;
+  }
 }
 
 .cdk-drag-preview img {

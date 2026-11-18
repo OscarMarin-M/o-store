@@ -1,41 +1,30 @@
 .create {
-  display: flex;
-  flex-direction: column;
-  gap: var(--os-space-3);
-  max-width: 720px;
+  max-width: 760px;
   margin-bottom: var(--os-space-5);
-  padding: var(--os-space-5);
-
-  h2 {
-    font-size: var(--os-text-lg);
-  }
 }
 
-.fields {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: var(--os-space-3);
-}
-
-.modules {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--os-space-4);
-  margin: 0;
+// Acción pequeña dentro de la ayuda de un campo.
+.link-button {
+  margin-left: var(--os-space-1);
   padding: 0;
   border: 0;
-
-  legend {
-    margin-bottom: var(--os-space-1);
-    font-size: var(--os-text-sm);
-    color: var(--os-color-text-muted);
-  }
+  background: none;
+  color: var(--os-color-text);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
-.actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--os-space-2);
+.modules-hint {
+  margin-top: 6px;
+}
+
+// Error que no es de un campo concreto: a la izquierda de los botones.
+.form-error {
+  flex: 1 1 240px;
+  align-self: center;
+  margin: 0;
+  font-size: var(--os-text-sm);
 }
 
 .table-wrap {
@@ -81,5 +70,5 @@ tbody tr:last-child td {
   width: 10px;
   height: 10px;
   border-radius: 2px;
-  background: var(--mark);
+  background: linear-gradient(135deg, var(--mark) 50%, var(--mark-2, var(--mark)) 50%);
 }

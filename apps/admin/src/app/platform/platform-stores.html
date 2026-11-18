@@ -2,54 +2,67 @@
   <h1>Tiendas</h1>
   @if (!creating()) {
     <button mat-flat-button class="os-primary" type="button" (click)="openForm()">
+      <mat-icon>add</mat-icon>
       Nueva tienda
     </button>
   }
 </header>
 
 @if (creating()) {
-  <form class="os-panel create" (ngSubmit)="create()" novalidate>
-    <h2>Nueva tienda</h2>
+  <form class="create" (ngSubmit)="create()" novalidate>
+    <os-form-section heading="Nueva tienda" icon="add_business" description="Se crea sin productos y con el tema inicial; después se ajustan logo, colores y dominios.">
+      <os-field label="Nombre" span="half" hint="El que verán los clientes. Ej.: Cartas del Sur." [error]="errors().name">
+        <input osControl name="name" required maxlength="80" autocomplete="off" [(ngModel)]="name" (ngModelChange)="onNameChange()" />
+      </os-field>
 
-    <div class="fields">
-      <mat-form-field appearance="outline">
-        <mat-label>Nombre</mat-label>
-        <input matInput name="name" required maxlength="80" [(ngModel)]="name" (ngModelChange)="onNameChange()" />
-        @if (errors().name; as message) {
-          <mat-hint class="os-error">{{ message }}</mat-hint>
+      <os-field label="Dirección interna" span="half" hint="Ej.: cartas-del-sur. Se usa en el subdominio y no se puede cambiar después." [error]="errors().slug">
+        <input osControl class="os-mono" name="slug" required maxlength="40" spellcheck="false" autocomplete="off" [(ngModel)]="slug" (input)="slugTouched = true" />
+      </os-field>
+
+      <os-field
+        label="Color principal"
+        span="half"
+        [hint]="primaryIssue()?.message ?? 'El color de la marca: botones de la tienda y la franja de su panel. Ej.: el color del logo.'"
+        [error]="errors().colorPrimary ?? (primaryIssue()?.level === 'blocked' ? primaryIssue()?.message : null)"
+      >
+        <os-color-input [value]="colorPrimary()" (valueChange)="setPrimary($event)" />
+      </os-field>
+
+      <os-field
+        label="Color secundario"
+        span="half"
+        [hint]="accentIssue()?.message ?? 'Un tono parecido para detalles y etiquetas. Se calcula solo; puedes cambiarlo.'"
+        [error]="errors().colorAccent ?? (accentIssue()?.level === 'blocked' ? accentIssue()?.message : null)"
+      >
+        <os-color-input [value]="colorAccent()" (valueChange)="setAccent($event)" />
+        <button osHint type="button" class="link-button" (click)="matchAccent()">Volver a calcularlo</button>
+      </os-field>
+
+      <fieldset class="os-fieldset">
+        <legend class="os-field-label">Funciones extra</legend>
+        <div class="os-choices">
+          @for (module of modules; track module) {
+            <label class="os-choice">
+              <input type="checkbox" [checked]="selected.has(module)" (change)="toggleModule(module, $any($event.target).checked)" />
+              <strong>{{ moduleLabels[module] }}</strong>
+              <small>{{ moduleHints[module] }}</small>
+            </label>
+          }
+        </div>
+        <p class="os-field-message modules-hint">Se pueden activar más tarde.</p>
+      </fieldset>
+
+      <div osFormActions class="os-form-actions">
+        @if (errors().form; as message) {
+          <p class="os-error form-error" role="alert">{{ message }}</p>
         }
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Dirección interna</mat-label>
-        <input matInput class="os-mono" name="slug" required maxlength="40" [(ngModel)]="slug" (input)="slugTouched = true" />
-        @if (errors().slug; as message) {
-          <mat-hint class="os-error">{{ message }}</mat-hint>
-        } @else {
-          <mat-hint>Se usa en el subdominio. No se puede cambiar después.</mat-hint>
-        }
-      </mat-form-field>
-    </div>
-
-    <fieldset class="modules">
-      <legend>Funciones extra</legend>
-      @for (module of modules; track module) {
-        <mat-checkbox [checked]="selected.has(module)" (change)="toggleModule(module, $event.checked)">
-          {{ moduleLabels[module] }}
-        </mat-checkbox>
-      }
-    </fieldset>
-
-    @if (errors().form; as message) {
-      <p class="os-error" role="alert">{{ message }}</p>
-    }
-
-    <div class="actions">
-      <button mat-button type="button" (click)="creating.set(false)">Cancelar</button>
-      <button mat-flat-button class="os-primary" type="submit" [disabled]="saving()">
-        {{ saving() ? 'Creando…' : 'Crear tienda' }}
-      </button>
-    </div>
+        <button mat-button type="button" (click)="creating.set(false)">Cancelar</button>
+        <button mat-flat-button class="os-primary" type="submit" [disabled]="saving()">
+          <mat-icon>check</mat-icon>
+          {{ saving() ? 'Creando…' : 'Crear tienda' }}
+        </button>
+      </div>
+    </os-form-section>
   </form>
 }
 
@@ -58,10 +71,10 @@
     <p class="os-muted">Cargando tiendas…</p>
   }
   @case ('error') {
-    <p class="os-error" role="alert">
+    <os-notice kind="error">
       No se pudieron cargar las tiendas.
-      <button mat-button type="button" (click)="stores.load()">Reintentar</button>
-    </p>
+      <button mat-button type="button" (click)="stores.load()"><mat-icon>refresh</mat-icon>Reintentar</button>
+    </os-notice>
   }
   @default {
     @if (stores.stores().length) {
@@ -79,7 +92,7 @@
             @for (store of stores.stores(); track store.id) {
               <tr>
                 <td>
-                  <a class="store" [routerLink]="['/tienda', store.id]" [style.--mark]="store.colorPrimary">
+                  <a class="store" [routerLink]="['/tienda', store.id]" [style.--mark]="store.colorPrimary" [style.--mark-2]="store.colorAccent">
                     <span class="mark" aria-hidden="true"></span>{{ store.name }}
                   </a>
                 </td>

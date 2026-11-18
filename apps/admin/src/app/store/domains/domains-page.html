@@ -3,6 +3,7 @@
     <h1>Dominios</h1>
     @if (!adding()) {
       <button mat-flat-button class="os-primary" type="button" (click)="openForm()">
+        <mat-icon>add</mat-icon>
         Añadir dominio propio
       </button>
     }
@@ -14,22 +15,24 @@
   </p>
 
   @if (adding()) {
-    <form class="os-panel add" (ngSubmit)="add()" novalidate>
-      <mat-form-field appearance="outline">
-        <mat-label>Tu dominio</mat-label>
-        <input matInput class="os-mono" name="domain" required [(ngModel)]="newDomain" spellcheck="false" autocomplete="off" />
-        @if (addError(); as error) {
-          <mat-hint class="os-error">{{ error }}</mat-hint>
-        } @else {
-          <mat-hint>Por ejemplo cartastcg.com.bo o www.cartastcg.com.bo</mat-hint>
-        }
-      </mat-form-field>
-      <div class="add-actions">
-        <button mat-button type="button" (click)="adding.set(false)">Cancelar</button>
-        <button mat-flat-button class="os-primary" type="submit" [disabled]="saving()">
-          {{ saving() ? 'Añadiendo…' : 'Añadir dominio' }}
-        </button>
-      </div>
+    <form class="add" (ngSubmit)="add()" novalidate>
+      <os-form-section heading="Añadir dominio propio" icon="language" description="Después te mostramos los dos registros DNS que hay que crear en tu proveedor.">
+        <os-field
+          label="Tu dominio"
+          span="two-thirds"
+          hint="Sin https:// ni barras. Ej.: cartastcg.com.bo o www.cartastcg.com.bo"
+          [error]="addError()"
+        >
+          <input osControl class="os-mono" name="domain" required [(ngModel)]="newDomain" spellcheck="false" autocomplete="off" />
+        </os-field>
+        <div osFormActions class="os-form-actions">
+          <button mat-button type="button" (click)="adding.set(false)">Cancelar</button>
+          <button mat-flat-button class="os-primary" type="submit" [disabled]="saving()">
+            <mat-icon>check</mat-icon>
+            {{ saving() ? 'Añadiendo…' : 'Añadir dominio' }}
+          </button>
+        </div>
+      </os-form-section>
     </form>
   }
 
@@ -54,7 +57,7 @@
       @case ('error') {
         <li class="row">
           <span class="os-error">No se pudieron cargar los dominios propios.</span>
-          <button mat-button type="button" (click)="load()">Reintentar</button>
+          <button mat-button type="button" (click)="load()"><mat-icon>refresh</mat-icon>Reintentar</button>
         </li>
       }
       @default {
@@ -75,22 +78,26 @@
             <div class="actions">
               @if (!domain.verified) {
                 <button mat-button type="button" (click)="toggleInstructions(domain.id)" [attr.aria-expanded]="openInstructions().has(domain.id)">
+                  <mat-icon>{{ openInstructions().has(domain.id) ? 'expand_less' : 'list_alt' }}</mat-icon>
                   {{ openInstructions().has(domain.id) ? 'Ocultar pasos' : 'Ver pasos' }}
                 </button>
                 <button mat-button type="button" [disabled]="busyId() === domain.id" (click)="check(domain)">
+                  <mat-icon>sync</mat-icon>
                   {{ busyId() === domain.id ? 'Comprobando…' : 'Comprobar' }}
                 </button>
                 @if (auth.isSuperAdmin()) {
                   <button mat-button type="button" [disabled]="busyId() === domain.id" (click)="markVerified(domain)">
+                    <mat-icon>verified</mat-icon>
                     Marcar como verificado
                   </button>
                 }
               } @else if (!domain.isPrimary) {
                 <button mat-button type="button" [disabled]="busyId() === domain.id" (click)="makePrimary(domain)">
+                  <mat-icon>star</mat-icon>
                   Hacer principal
                 </button>
               }
-              <button mat-button type="button" [disabled]="busyId() === domain.id" (click)="remove(domain)">Quitar</button>
+              <button mat-button type="button" [disabled]="busyId() === domain.id" (click)="remove(domain)"><mat-icon>delete</mat-icon>Quitar</button>
             </div>
 
             @if (rowMessages()[domain.id]; as m) {
@@ -108,6 +115,7 @@
                     <dd>
                       <code>{{ domain.verificationName }}</code>
                       <button mat-button type="button" (click)="copy(domain.verificationName)">
+                        <mat-icon>{{ copied() === domain.verificationName ? 'check' : 'content_copy' }}</mat-icon>
                         {{ copied() === domain.verificationName ? 'Copiado' : 'Copiar' }}
                       </button>
                     </dd>
@@ -115,6 +123,7 @@
                     <dd>
                       <code>{{ domain.verificationValue }}</code>
                       <button mat-button type="button" (click)="copy(domain.verificationValue)">
+                        <mat-icon>{{ copied() === domain.verificationValue ? 'check' : 'content_copy' }}</mat-icon>
                         {{ copied() === domain.verificationValue ? 'Copiado' : 'Copiar' }}
                       </button>
                     </dd>
@@ -130,6 +139,7 @@
                     <dd>
                       <code>{{ store.platformDomain }}</code>
                       <button mat-button type="button" (click)="copy(store.platformDomain)">
+                        <mat-icon>{{ copied() === store.platformDomain ? 'check' : 'content_copy' }}</mat-icon>
                         {{ copied() === store.platformDomain ? 'Copiado' : 'Copiar' }}
                       </button>
                     </dd>

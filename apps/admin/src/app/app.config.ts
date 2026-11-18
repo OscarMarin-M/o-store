@@ -5,6 +5,7 @@ import {
   provideAppInitializer,
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
+import { MatIconRegistry } from '@angular/material/icon';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { appRoutes } from './app.routes';
 import { authInterceptor } from './core/auth.interceptor';
@@ -15,6 +16,10 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
     provideRouter(appRoutes, withComponentInputBinding()),
-    provideAppInitializer(() => inject(AuthService).init()),
+    provideAppInitializer(() => {
+      // <mat-icon>nombre</mat-icon> usa Material Symbols (paquete material-symbols).
+      inject(MatIconRegistry).setDefaultFontSetClass('material-symbols-outlined');
+      return inject(AuthService).init();
+    }),
   ],
 };

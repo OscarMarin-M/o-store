@@ -6,14 +6,13 @@
   margin-bottom: var(--os-space-4);
 }
 
-.search input {
+.search,
+.category {
   width: min(320px, 100%);
-  padding: 8px var(--os-space-3);
-  border: 1px solid var(--os-color-line);
-  border-radius: var(--os-radius-field);
-  background: var(--os-color-surface);
-  color: inherit;
-  font: inherit;
+}
+
+.category {
+  width: min(260px, 100%);
 }
 
 .filters {

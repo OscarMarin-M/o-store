@@ -24,6 +24,7 @@
           "@fontsource/atkinson-hyperlegible-next/400.css",
           "@fontsource/atkinson-hyperlegible-next/600.css",
           "@fontsource/atkinson-hyperlegible-mono/400.css",
+          "material-symbols/outlined.css",
           "apps/admin/src/styles.scss"
         ]
       },

@@ -3,8 +3,8 @@
   gap: var(--os-space-2);
 }
 
-.saved {
-  color: var(--os-color-success);
+.message {
+  margin-bottom: var(--os-space-4);
 }
 
 .layout {
@@ -34,34 +34,6 @@ h2 {
 
 p {
   margin: 0;
-}
-
-.drop {
-  display: flex;
-  flex-direction: column;
-  gap: var(--os-space-1);
-  padding: var(--os-space-5);
-  border: 1px dashed var(--os-color-line);
-  border-radius: var(--os-radius-field);
-  cursor: pointer;
-
-  &.dragging,
-  &:hover {
-    border-color: var(--os-color-accent);
-    background: var(--os-color-surface-raised);
-  }
-
-  &:focus-within {
-    outline: 2px solid var(--os-color-focus);
-    outline-offset: 2px;
-  }
-
-  input {
-    position: absolute;
-    opacity: 0;
-    width: 1px;
-    height: 1px;
-  }
 }
 
 .file {

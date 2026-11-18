@@ -1,8 +1,21 @@
 .back {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--os-space-1);
   margin-bottom: var(--os-space-3);
   color: var(--os-color-text-muted);
   font-size: var(--os-text-sm);
+  text-decoration: none;
+
+  &:hover {
+    color: var(--os-color-text);
+  }
+
+  .mat-icon.material-symbols-outlined {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+  }
 }
 
 .actions {
@@ -17,16 +30,6 @@ p {
 
 .message {
   margin-bottom: var(--os-space-4);
-
-  &.ok {
-    color: var(--os-color-success);
-  }
-}
-
-.note {
-  margin-bottom: var(--os-space-4);
-  padding-left: var(--os-space-3);
-  border-left: 3px solid var(--os-color-line);
 }
 
 .form {
@@ -36,135 +39,69 @@ p {
   max-width: 860px;
 }
 
-.block {
-  display: flex;
-  flex-direction: column;
-  gap: var(--os-space-4);
-  padding: var(--os-space-5);
+// ---- Variantes ----
 
-  h2 {
-    font-size: var(--os-text-lg);
-  }
-}
-
-.row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--os-space-4);
-}
-
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: var(--os-space-1);
-
-  &.narrow {
-    flex: 0 1 220px;
-  }
-
-  label {
-    font-weight: 600;
-    font-size: var(--os-text-sm);
-  }
-}
-
-input:not([type='checkbox'], [type='radio']),
-textarea,
-select {
-  width: 100%;
-  padding: 8px var(--os-space-3);
-  border: 1px solid var(--os-color-line);
-  border-radius: var(--os-radius-field);
-  background: var(--os-color-bg);
-  color: inherit;
-  font: inherit;
-
-  &[aria-invalid='true'] {
-    border-color: var(--os-color-danger);
-  }
-}
-
-textarea {
-  resize: vertical;
-  line-height: 1.5;
-}
-
-.num {
-  text-align: right;
-}
-
-.hint,
-.field-error {
-  font-size: var(--os-text-sm);
-  max-width: 60ch;
-}
-
-.hint {
-  color: var(--os-color-text-muted);
-}
-
-.field-error {
-  color: var(--os-color-danger);
-}
-
-.check {
-  display: flex;
-  align-items: center;
-  gap: var(--os-space-2);
-  cursor: pointer;
-
-  input {
-    accent-color: var(--os-color-accent);
-    width: 16px;
-    height: 16px;
-  }
-}
-
-.radios {
-  display: flex;
-  flex-direction: column;
-  gap: var(--os-space-2);
-}
-
+// Las opciones cuelgan de la casilla "Tiene variantes".
 .options {
   display: flex;
   flex-direction: column;
-  gap: var(--os-space-3);
+  gap: var(--os-space-4);
   padding-left: var(--os-space-4);
   border-left: 2px solid var(--os-color-line);
 }
 
 .option {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
+  display: grid;
+  grid-template-columns: minmax(140px, 1fr) minmax(0, 2.5fr) auto;
+  align-items: start;
   gap: var(--os-space-3);
+
+  // El botón se alinea con los controles, no con las etiquetas.
+  .remove-option {
+    // Alto de la pestaña de la etiqueta (texto, relleno y borde), pegada al control.
+    margin-top: 24px;
+  }
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+
+    .remove-option {
+      justify-self: start;
+      margin-top: 0;
+    }
+  }
 }
 
-.option-name {
-  flex: 0 1 160px;
+.add-option {
+  align-self: flex-start;
 }
 
-.option-values {
-  flex: 1 1 280px;
-}
-
+// Caja de valores: parece un control y dentro van las etiquetas y el input.
 .chips {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--os-space-1);
-  padding: 4px;
+  min-height: 38px;
+  padding: 3px;
   border: 1px solid var(--os-color-line);
   border-radius: var(--os-radius-field);
   background: var(--os-color-bg);
+  transition: border-color 120ms ease, box-shadow 120ms ease;
 
-  input {
+  &:focus-within {
+    border-color: var(--os-color-focus);
+    box-shadow: 0 0 0 1px var(--os-color-focus);
+  }
+
+  .os-control {
     flex: 1 1 120px;
     width: auto;
+    min-height: 30px;
+    padding: 2px var(--os-space-2);
     border: 0;
-    padding: 4px var(--os-space-2);
     background: none;
+    box-shadow: none;
   }
 }
 
@@ -178,16 +115,30 @@ textarea {
 }
 
 .chip-remove {
-  padding: 0 6px;
+  display: grid;
+  place-items: center;
+  padding: 2px;
   border: 0;
+  border-radius: var(--os-radius-field);
   background: none;
   color: var(--os-color-text-muted);
-  font: inherit;
   cursor: pointer;
+
+  &:hover {
+    color: var(--os-color-text);
+  }
+
+  .mat-icon.material-symbols-outlined {
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
+  }
 }
 
-.add-option {
-  align-self: flex-start;
+.variants-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--os-space-2);
 }
 
 .table-wrap {
@@ -208,16 +159,17 @@ textarea {
 
   th {
     font-size: var(--os-text-sm);
+    font-weight: 600;
     color: var(--os-color-text-muted);
   }
 
-  .num,
-  .num input {
+  .num {
     text-align: right;
   }
 
-  input {
+  .os-control {
     width: 110px;
+    min-height: 32px;
     padding: 4px var(--os-space-2);
   }
 }

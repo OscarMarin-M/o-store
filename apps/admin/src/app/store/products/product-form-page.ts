@@ -15,6 +15,7 @@ import {
   CURRENCIES,
   productInputSchema,
   variantCode,
+  type CategoryDto,
   type Currency,
   type ExchangeRateDto,
   type ProductDto,
@@ -24,6 +25,8 @@ import { apiMessage } from '../../core/api-error';
 import { ConfirmService } from '../../core/confirm.service';
 import { CURRENCY_LABELS, convert, formatMoney } from '../../core/money';
 import { StoresService } from '../../core/stores.service';
+import { OS_UI } from '../../ui/ui';
+import { CategoriesApi, categoryTree } from '../categories/categories-api';
 import { ProductImages, type ImageItem, type RequestUpload } from './product-images';
 import { ProductsApi, STATUS_LABELS } from './products-api';
 
@@ -52,13 +55,14 @@ function combinations(lists: string[][]): string[][] {
 
 @Component({
   selector: 'os-product-form-page',
-  imports: [FormsModule, MatButtonModule, RouterLink, ProductImages],
+  imports: [FormsModule, MatButtonModule, RouterLink, ProductImages, OS_UI],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './product-form-page.html',
   styleUrl: './product-form-page.scss',
 })
 export class ProductFormPage {
   private readonly api = inject(ProductsApi);
+  private readonly categoriesApi = inject(CategoriesApi);
   private readonly router = inject(Router);
   private readonly confirm = inject(ConfirmService);
   private readonly stores = inject(StoresService);
@@ -85,6 +89,9 @@ export class ProductFormPage {
   protected readonly currency = signal<Currency>('BOB');
   protected readonly stock = signal('0');
   protected readonly status = signal<ProductStatus>('draft');
+  protected readonly categoryId = signal<string | null>(null);
+  protected readonly categories = signal<CategoryDto[]>([]);
+  protected readonly categoryTree = computed(() => categoryTree(this.categories()));
   protected readonly images = signal<ImageItem[]>([]);
   protected readonly hasVariants = signal(false);
   protected readonly options = signal<OptionDraft[]>([]);
@@ -176,7 +183,7 @@ export class ProductFormPage {
 
   protected onValueKey(index: number, event: KeyboardEvent): void {
     const option = this.options()[index];
-    if (event.key === 'Enter') {
+    if (event.key === 'Enter' || event.key === ',') {
       event.preventDefault();
       this.addValue(index, option.pending);
       this.patchOption(index, { pending: '' });
@@ -281,6 +288,7 @@ export class ProductFormPage {
     this.loadState.set(productId ? 'loading' : 'ready');
     this.api.settings(storeId).then((s) => this.prefix.set(s.productCodePrefix), () => undefined);
     this.api.exchangeRate().then((r) => this.rate.set(r), () => undefined);
+    this.categoriesApi.list(storeId).then((c) => this.categories.set(c), () => this.categories.set([]));
     if (!productId) {
       this.reset();
       return;
@@ -302,6 +310,7 @@ export class ProductFormPage {
     this.currency.set('BOB');
     this.stock.set('0');
     this.status.set('draft');
+    this.categoryId.set(null);
     this.images.set([]);
     this.hasVariants.set(false);
     this.options.set([]);
@@ -318,6 +327,7 @@ export class ProductFormPage {
     this.currency.set(p.priceCurrency);
     this.stock.set(String(p.stock));
     this.status.set(p.status);
+    this.categoryId.set(p.categoryId);
     this.images.set(
       p.images.map((img) => ({ key: img.path, path: img.path, url: img.url, state: 'done', progress: 1 })),
     );
@@ -350,7 +360,7 @@ export class ProductFormPage {
       priceCurrency: this.currency(),
       stock: variants ? 0 : number(this.stock()),
       status: this.status(),
-      categoryId: null,
+      categoryId: this.categoryId(),
       images: this.images()
         .filter((i) => i.state === 'done' && i.path)
         .map((i) => i.path as string),

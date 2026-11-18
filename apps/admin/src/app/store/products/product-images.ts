@@ -8,7 +8,9 @@ import {
   signal,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
 import { uploadWithProgress, type UploadHandle } from '../../core/upload';
+import { OsNotice } from '../../ui/notice';
 
 export interface ImageItem {
   key: string;
@@ -37,24 +39,25 @@ export type RequestUpload = (extension: string) => Promise<{ path: string; signe
  */
 @Component({
   selector: 'os-product-images',
-  imports: [CdkDropList, CdkDrag, MatButtonModule],
+  imports: [CdkDropList, CdkDrag, MatButtonModule, MatIcon, OsNotice],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '(window:paste)': 'onPaste($event)' },
   template: `
     <label
-      class="drop"
+      class="os-drop"
       [class.dragging]="dragging()"
       (dragover)="onDragOver($event)"
       (dragleave)="dragging.set(false)"
       (drop)="onDrop($event)"
     >
       <input type="file" multiple accept="image/png,image/jpeg,image/webp" (change)="onPick($event)" />
+      <mat-icon class="os-drop-icon" aria-hidden="true">add_photo_alternate</mat-icon>
       <span>Arrastra fotos aquí, pégalas o <u>elige archivos</u></span>
       <span class="os-muted">PNG, JPG o WebP, hasta 5 MB cada una y {{ max }} en total. La primera es la portada.</span>
     </label>
 
     @if (error(); as e) {
-      <p class="os-error" role="alert">{{ e }}</p>
+      <os-notice kind="error">{{ e }}</os-notice>
     }
 
     @if (images().length) {
@@ -75,14 +78,24 @@ export type RequestUpload = (extension: string) => Promise<{ path: string; signe
             }
             <div class="item-actions">
               @if (img.state === 'error') {
-                <button mat-button type="button" (click)="retry(img)">Reintentar</button>
+                <button mat-icon-button type="button" aria-label="Reintentar la subida" title="Reintentar" (click)="retry(img)">
+                  <mat-icon>refresh</mat-icon>
+                </button>
               }
               @if (!first && img.state === 'done') {
-                <button mat-button type="button" (click)="makeCover(i)">Portada</button>
+                <button mat-icon-button type="button" aria-label="Usar como portada" title="Usar como portada" (click)="makeCover(i)">
+                  <mat-icon>star</mat-icon>
+                </button>
               }
-              <button mat-button type="button" (click)="remove(img)">
-                {{ img.state === 'uploading' ? 'Cancelar' : 'Quitar' }}
-              </button>
+              @if (img.state === 'uploading') {
+                <button mat-icon-button type="button" aria-label="Cancelar la subida" title="Cancelar" (click)="remove(img)">
+                  <mat-icon>close</mat-icon>
+                </button>
+              } @else {
+                <button mat-icon-button type="button" aria-label="Quitar la foto" title="Quitar" (click)="remove(img)">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              }
             </div>
           </li>
         }

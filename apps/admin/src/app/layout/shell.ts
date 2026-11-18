@@ -13,6 +13,7 @@ import {
   RouterLinkActive,
   RouterOutlet,
 } from '@angular/router';
+import { MatIcon } from '@angular/material/icon';
 import { filter } from 'rxjs';
 import { AuthService } from '../core/auth.service';
 import { StoresService } from '../core/stores.service';
@@ -22,7 +23,7 @@ import { STORE_SECTIONS } from '../store/store-sections';
 /** Marco del admin: menú lateral con las tiendas y franja con el color de la activa. */
 @Component({
   selector: 'os-shell',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, MatIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './shell.html',
   styleUrl: './shell.scss',

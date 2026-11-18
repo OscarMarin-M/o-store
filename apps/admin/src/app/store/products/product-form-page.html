@@ -1,5 +1,8 @@
 @if (store(); as store) {
-  <a class="back" [routerLink]="['/tienda', store.id, 'productos']">Volver a productos</a>
+  <a class="back" [routerLink]="['/tienda', store.id, 'productos']">
+    <mat-icon aria-hidden="true">arrow_back</mat-icon>
+    Volver a productos
+  </a>
 
   @switch (loadState()) {
     @case ('loading') {
@@ -15,201 +18,219 @@
         <div class="actions">
           @if (product(); as p) {
             @if (p.status === 'archived') {
-              <button mat-button type="button" (click)="changeStatus('draft')">Restaurar como borrador</button>
+              <button mat-button type="button" (click)="changeStatus('draft')"><mat-icon>unarchive</mat-icon>Restaurar como borrador</button>
             } @else {
-              <button mat-button type="button" (click)="changeStatus('archived')">Archivar</button>
+              <button mat-button type="button" (click)="changeStatus('archived')"><mat-icon>archive</mat-icon>Archivar</button>
             }
           }
           <button mat-flat-button class="os-primary" type="button" [disabled]="saving() || uploading()" (click)="save()">
+            <mat-icon>check</mat-icon>
             {{ saving() ? 'Guardando…' : uploading() ? 'Esperando fotos…' : isNew() ? 'Crear producto' : 'Guardar cambios' }}
           </button>
         </div>
       </header>
 
       @if (message(); as m) {
-        <p class="message" [class.os-error]="m.kind === 'error'" [class.ok]="m.kind === 'ok'" role="status">{{ m.text }}</p>
+        <os-notice class="message" [kind]="m.kind">{{ m.text }}</os-notice>
       }
       @if (product()?.status === 'archived') {
-        <p class="note">Este producto está archivado: no se ve en la tienda.</p>
+        <os-notice class="message" kind="warning">Este producto está archivado: no se ve en la tienda.</os-notice>
       }
 
       <form class="form" (ngSubmit)="save()" novalidate>
-        <section class="os-panel block" aria-labelledby="basics">
-          <h2 id="basics">Datos</h2>
-          <div class="field">
-            <label for="p-name">Nombre</label>
-            <input id="p-name" name="name" maxlength="160" [ngModel]="name()" (ngModelChange)="name.set($event)" [attr.aria-invalid]="!!errors()['name']" />
-            @if (errors()['name']; as e) { <p class="field-error">{{ e }}</p> }
-          </div>
-          <div class="field narrow">
-            <label for="p-code">Código público</label>
+        <os-form-section heading="Datos" icon="sell" description="Lo que tus clientes ven primero en la tienda.">
+          <os-field label="Nombre" hint="Como lo buscarían tus clientes. Ej.: Sobre Phantom Nightmare o Polera oversize negra." [error]="errors()['name']">
+            <input osControl name="name" maxlength="160" autocomplete="off" [ngModel]="name()" (ngModelChange)="name.set($event)" />
+          </os-field>
+
+          <os-field
+            label="Código público"
+            span="half"
+            optional
+            hint="Lo usan tus clientes para pedirte el producto. Vacío, se asigna el siguiente número."
+            [error]="errors()['code']"
+          >
             <input
-              id="p-code"
+              osControl
               name="code"
               class="os-mono"
               maxlength="40"
               spellcheck="false"
-              [placeholder]="'Se genera solo: ' + prefix() + '-…'"
+              autocomplete="off"
+              [placeholder]="prefix() + '-0001'"
               [ngModel]="code()"
               (ngModelChange)="code.set($event)"
             />
-            @if (errors()['code']; as e) {
-              <p class="field-error">{{ e }}</p>
-            } @else {
-              <p class="hint">Lo ven tus clientes para pedirte el producto. Déjalo vacío y se asigna el siguiente número.</p>
-            }
-          </div>
-          <div class="field">
-            <label for="p-desc">Descripción</label>
-            <textarea id="p-desc" name="description" rows="5" maxlength="5000" [ngModel]="description()" (ngModelChange)="description.set($event)"></textarea>
-          </div>
-        </section>
+          </os-field>
 
-        <section class="os-panel block" aria-labelledby="photos">
-          <h2 id="photos">Fotos</h2>
-          <os-product-images [(images)]="images" [requestUpload]="requestUpload" />
-        </section>
-
-        <section class="os-panel block" aria-labelledby="pricing">
-          <h2 id="pricing">Precio y stock</h2>
-          <div class="row">
-            <div class="field narrow">
-              <label for="p-price">Precio</label>
-              <input id="p-price" name="price" inputmode="decimal" class="num" [ngModel]="price()" (ngModelChange)="price.set($event)" [attr.aria-invalid]="!!errors()['price']" />
-              @if (errors()['price']; as e) {
-                <p class="field-error">{{ e }}</p>
-              } @else if (equivalent(); as eq) {
-                <p class="hint">Equivale a {{ eq }} al tipo oficial ({{ rate()?.rate }} Bs por dólar).</p>
-              }
-            </div>
-            <div class="field narrow">
-              <label for="p-currency">Moneda del precio</label>
-              <select id="p-currency" name="currency" [ngModel]="currency()" (ngModelChange)="currency.set($event)">
-                @for (c of currencies; track c) {
-                  <option [value]="c">{{ currencyLabels[c] }}</option>
+          <os-field label="Categoría" span="half" [hint]="categories().length ? 'Dónde aparece en el menú de la tienda.' : null">
+            <select osControl name="category" [ngModel]="categoryId()" (ngModelChange)="categoryId.set($event)">
+              <option [ngValue]="null">Sin categoría</option>
+              @for (c of categoryTree(); track c.id) {
+                <option [ngValue]="c.id">{{ c.name }}</option>
+                @for (s of c.children; track s.id) {
+                  <option [ngValue]="s.id">{{ c.name }} › {{ s.name }}</option>
                 }
-              </select>
-              @if (currency() === 'USD') {
-                <p class="hint">En la tienda se mostrará en bolivianos, al tipo oficial del día.</p>
               }
-            </div>
-            @if (!hasVariants()) {
-              <div class="field narrow">
-                <label for="p-stock">Stock</label>
-                <input id="p-stock" name="stock" inputmode="numeric" class="num" [ngModel]="stock()" (ngModelChange)="stock.set($event)" [attr.aria-invalid]="!!errors()['stock']" />
-                @if (errors()['stock']; as e) { <p class="field-error">{{ e }}</p> }
-              </div>
+            </select>
+            @if (!categories().length) {
+              <span osHint>
+                Aún no hay categorías:
+                <a [routerLink]="['/tienda', store.id, 'categorias']">créalas en Categorías</a>.
+              </span>
             }
-          </div>
+          </os-field>
 
-          <label class="check">
+          <os-field label="Descripción" optional hint="Lo que hace falta para decidir la compra: estado, idioma, material, medidas.">
+            <textarea osControl name="description" rows="5" maxlength="5000" [ngModel]="description()" (ngModelChange)="description.set($event)"></textarea>
+          </os-field>
+        </os-form-section>
+
+        <os-form-section heading="Fotos" icon="photo_library" description="La primera es la portada. Arrastra las miniaturas para cambiar el orden.">
+          <os-product-images [(images)]="images" [requestUpload]="requestUpload" />
+        </os-form-section>
+
+        <os-form-section heading="Precio y stock" icon="payments">
+          <os-field label="Moneda" span="third" [hint]="currency() === 'USD' ? 'La tienda lo muestra en bolivianos, al tipo oficial del día.' : null">
+            <select osControl name="currency" [ngModel]="currency()" (ngModelChange)="currency.set($event)">
+              @for (c of currencies; track c) {
+                <option [value]="c">{{ currencyLabels[c] }}</option>
+              }
+            </select>
+          </os-field>
+
+          <os-field
+            label="Precio"
+            span="third"
+            [prefix]="currency() === 'BOB' ? 'Bs' : 'US$'"
+            [hint]="equivalent() ? 'Equivale a ' + equivalent() + ' (' + rate()?.rate + ' Bs por dólar).' : 'Ej.: 120 o 15,50'"
+            [error]="errors()['price']"
+          >
+            <input osControl name="price" inputmode="decimal" class="num" autocomplete="off" placeholder="0,00" [ngModel]="price()" (ngModelChange)="price.set($event)" />
+          </os-field>
+
+          @if (!hasVariants()) {
+            <os-field label="Stock" span="third" hint="Unidades disponibles. Con 0 se muestra agotado." [error]="errors()['stock']">
+              <input osControl name="stock" inputmode="numeric" class="num" autocomplete="off" [ngModel]="stock()" (ngModelChange)="stock.set($event)" />
+            </os-field>
+          }
+
+          <label class="os-check">
             <input type="checkbox" name="hasVariants" [ngModel]="hasVariants()" (ngModelChange)="toggleVariants($event)" />
-            Tiene variantes (por ejemplo tallas o colores), cada una con su stock
+            <strong>Tiene variantes</strong>
+            <small>Por ejemplo tallas o colores, cada combinación con su propio stock y, si quieres, su propio precio.</small>
           </label>
 
           @if (hasVariants()) {
             <div class="options">
               @for (option of options(); track $index; let i = $index) {
                 <div class="option">
-                  <div class="field option-name">
-                    <label [for]="'opt-name-' + i">Opción</label>
-                    <input [id]="'opt-name-' + i" [name]="'optName' + i" maxlength="30" [ngModel]="option.name" (ngModelChange)="setOptionName(i, $event)" />
-                  </div>
-                  <div class="field option-values">
-                    <label [for]="'opt-values-' + i">Valores</label>
+                  <os-field class="option-name" label="Opción" [hint]="i === 0 ? 'Ej.: Talla' : 'Ej.: Color'">
+                    <input osControl [name]="'optName' + i" maxlength="30" autocomplete="off" [ngModel]="option.name" (ngModelChange)="setOptionName(i, $event)" />
+                  </os-field>
+                  <os-field class="option-values" label="Valores" hint="Escribe cada valor y pulsa Enter o coma.">
                     <div class="chips">
                       @for (value of option.values; track value; let vi = $index) {
                         <span class="chip">
                           {{ value }}
-                          <button type="button" class="chip-remove" (click)="removeValue(i, vi)" [attr.aria-label]="'Quitar ' + value">×</button>
+                          <button type="button" class="chip-remove" (click)="removeValue(i, vi)" [attr.aria-label]="'Quitar ' + value">
+                            <mat-icon aria-hidden="true">close</mat-icon>
+                          </button>
                         </span>
                       }
                       <input
-                        [id]="'opt-values-' + i"
+                        osControl
                         [name]="'optValues' + i"
                         maxlength="40"
-                        [placeholder]="option.values.length ? 'Añadir otro' : 'Escribe y pulsa Enter: S, M, L'"
+                        autocomplete="off"
+                        [placeholder]="option.values.length ? 'Añadir otro' : i === 0 ? 'S, M, L' : 'Negro, Blanco'"
                         [ngModel]="option.pending"
                         (ngModelChange)="setPending(i, $event)"
                         (keydown)="onValueKey(i, $event)"
                         (blur)="commitPending(i)"
                       />
                     </div>
-                  </div>
-                  <button mat-button type="button" (click)="removeOption(i)">Quitar opción</button>
+                  </os-field>
+                  <button mat-button type="button" class="remove-option" (click)="removeOption(i)"><mat-icon>delete</mat-icon>Quitar</button>
                 </div>
               }
-              @if (errors()['optionNames']; as e) { <p class="field-error">{{ e }}</p> }
+              @if (errors()['optionNames']; as e) { <p class="os-field-message os-field-error">{{ e }}</p> }
               @if (options().length < 3) {
-                <button mat-button type="button" class="add-option" (click)="addOption()">Añadir otra opción</button>
+                <button mat-button type="button" class="add-option" (click)="addOption()"><mat-icon>add</mat-icon>Añadir otra opción</button>
               }
             </div>
 
             @if (variantRows().length) {
-              @if (tooManyVariants()) {
-                <p class="field-error">Son {{ variantRows().length }} combinaciones y el máximo es 100.</p>
-              }
-              <div class="table-wrap">
-                <table class="variants">
-                  <thead>
-                    <tr>
-                      <th scope="col">Variante</th>
-                      <th scope="col">Código</th>
-                      <th scope="col" class="num">Precio</th>
-                      <th scope="col" class="num">Stock</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (row of variantRows(); track row.key) {
+              <div class="variants-block">
+                @if (tooManyVariants()) {
+                  <p class="os-field-message os-field-error">Son {{ variantRows().length }} combinaciones y el máximo es 100.</p>
+                }
+                <div class="table-wrap">
+                  <table class="variants">
+                    <thead>
                       <tr>
-                        <td>{{ row.values.join(' / ') }}</td>
-                        <td class="os-mono os-muted">{{ row.code }}</td>
-                        <td class="num">
-                          <input
-                            inputmode="decimal"
-                            class="num"
-                            [name]="'vprice-' + row.key"
-                            [placeholder]="price() || 'Igual'"
-                            [attr.aria-label]="'Precio de ' + row.values.join(' / ') + ', vacío usa el del producto'"
-                            [ngModel]="variant(row.key).price"
-                            (ngModelChange)="setVariant(row.key, 'price', $event)"
-                          />
-                        </td>
-                        <td class="num">
-                          <input
-                            inputmode="numeric"
-                            class="num"
-                            [name]="'vstock-' + row.key"
-                            [attr.aria-label]="'Stock de ' + row.values.join(' / ')"
-                            [ngModel]="variant(row.key).stock"
-                            (ngModelChange)="setVariant(row.key, 'stock', $event)"
-                          />
-                        </td>
+                        <th scope="col">Variante</th>
+                        <th scope="col">Código</th>
+                        <th scope="col" class="num">Precio</th>
+                        <th scope="col" class="num">Stock</th>
                       </tr>
-                    }
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      @for (row of variantRows(); track row.key) {
+                        <tr>
+                          <td>{{ row.values.join(' / ') }}</td>
+                          <td class="os-mono os-muted">{{ row.code }}</td>
+                          <td class="num">
+                            <input
+                              inputmode="decimal"
+                              class="os-control num"
+                              [name]="'vprice-' + row.key"
+                              [placeholder]="price() || 'Igual'"
+                              [attr.aria-label]="'Precio de ' + row.values.join(' / ') + ', vacío usa el del producto'"
+                              [ngModel]="variant(row.key).price"
+                              (ngModelChange)="setVariant(row.key, 'price', $event)"
+                            />
+                          </td>
+                          <td class="num">
+                            <input
+                              inputmode="numeric"
+                              class="os-control num"
+                              [name]="'vstock-' + row.key"
+                              [attr.aria-label]="'Stock de ' + row.values.join(' / ')"
+                              [ngModel]="variant(row.key).stock"
+                              (ngModelChange)="setVariant(row.key, 'stock', $event)"
+                            />
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+                <p class="os-field-message">El precio vacío usa el del producto. Los códigos se fijan al guardar.</p>
               </div>
-              <p class="hint">El precio vacío usa el del producto. Los códigos se fijan al guardar.</p>
             }
-            @if (errors()['variants']; as e) { <p class="field-error">{{ e }}</p> }
+            @if (errors()['variants']; as e) { <p class="os-field-message os-field-error">{{ e }}</p> }
           }
-        </section>
+        </os-form-section>
 
         @if (product()?.status !== 'archived') {
-          <section class="os-panel block" aria-labelledby="visibility">
-            <h2 id="visibility">Visibilidad</h2>
-            <div class="radios" role="radiogroup" aria-labelledby="visibility">
-              <label class="check">
-                <input type="radio" name="status" value="draft" [ngModel]="status()" (ngModelChange)="status.set($event)" />
-                Borrador: solo lo ves en el admin
-              </label>
-              <label class="check">
-                <input type="radio" name="status" value="active" [ngModel]="status()" (ngModelChange)="status.set($event)" />
-                Publicado: se ve en la tienda
-              </label>
-            </div>
-          </section>
+          <os-form-section heading="Visibilidad" icon="visibility">
+            <fieldset class="os-fieldset">
+              <legend class="visually-hidden">Estado del producto</legend>
+              <div class="os-choices">
+                <label class="os-choice">
+                  <input type="radio" name="status" value="draft" [ngModel]="status()" (ngModelChange)="status.set($event)" />
+                  <strong>Borrador</strong>
+                  <small>Solo lo ves en el admin. Úsalo mientras lo preparas.</small>
+                </label>
+                <label class="os-choice">
+                  <input type="radio" name="status" value="active" [ngModel]="status()" (ngModelChange)="status.set($event)" />
+                  <strong>Publicado</strong>
+                  <small>Se ve en la tienda y se puede comprar.</small>
+                </label>
+              </div>
+            </fieldset>
+          </os-form-section>
         }
       </form>
     }

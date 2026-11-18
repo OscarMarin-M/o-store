@@ -9,8 +9,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
+import { OS_UI } from '../../ui/ui';
 import { createDomainSchema, type StoreDomainDto } from '@o-stores/contracts';
 import { apiMessage } from '../../core/api-error';
 import { AuthService } from '../../core/auth.service';
@@ -20,7 +19,7 @@ import { DomainsApi } from './domains-api';
 
 @Component({
   selector: 'os-domains-page',
-  imports: [FormsModule, MatButtonModule, MatFormFieldModule, MatInputModule],
+  imports: [FormsModule, MatButtonModule, OS_UI],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './domains-page.html',
   styleUrl: './domains-page.scss',

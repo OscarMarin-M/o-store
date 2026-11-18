@@ -3,22 +3,23 @@
     <h1>Logo y colores</h1>
     <div class="actions">
       @if (dirty()) {
-        <button mat-button type="button" (click)="reset()">Descartar cambios</button>
+        <button mat-button type="button" (click)="reset()"><mat-icon>undo</mat-icon>Descartar cambios</button>
       }
       <button
         mat-flat-button
         class="os-primary"
         type="button"
-        [disabled]="!dirty() || saving() || logo()?.state === 'uploading'"
+        [disabled]="!dirty() || saving() || hasColorErrors() || logo()?.state === 'uploading'"
         (click)="save()"
       >
+        <mat-icon>check</mat-icon>
         {{ saving() ? 'Guardando…' : 'Guardar cambios' }}
       </button>
     </div>
   </header>
 
   @if (message(); as m) {
-    <p [class]="m.kind === 'ok' ? 'saved' : 'os-error'" role="status">{{ m.text }}</p>
+    <os-notice class="message" [kind]="m.kind">{{ m.text }}</os-notice>
   }
 
   <div class="layout">
@@ -26,19 +27,20 @@
       <section class="os-panel block" aria-labelledby="logo-title">
         <h2 id="logo-title">Logo</h2>
         <label
-          class="drop"
+          class="os-drop"
           [class.dragging]="dragging()"
           (dragover)="$event.preventDefault(); dragging.set(true)"
           (dragleave)="dragging.set(false)"
           (drop)="onDrop($event)"
         >
           <input type="file" accept="image/png,image/jpeg,image/webp" (change)="onPick($event)" />
+          <mat-icon class="os-drop-icon" aria-hidden="true">upload</mat-icon>
           <span class="drop-main">Arrastra el logo aquí, pégalo o <u>elige un archivo</u></span>
           <span class="os-muted">PNG, JPG o WebP, hasta 2 MB. Mejor con fondo transparente.</span>
         </label>
 
         @if (logoError(); as error) {
-          <p class="os-error" role="alert">{{ error }}</p>
+          <os-notice kind="error">{{ error }}</os-notice>
         }
 
         @if (logo(); as l) {
@@ -60,13 +62,13 @@
             </div>
             @switch (l.state) {
               @case ('uploading') {
-                <button mat-button type="button" (click)="cancelUpload()">Cancelar</button>
+                <button mat-button type="button" (click)="cancelUpload()"><mat-icon>close</mat-icon>Cancelar</button>
               }
               @case ('error') {
-                <button mat-button type="button" (click)="retryUpload()">Reintentar</button>
+                <button mat-button type="button" (click)="retryUpload()"><mat-icon>refresh</mat-icon>Reintentar</button>
               }
               @default {
-                <button mat-button type="button" (click)="discardLogo()">Quitar</button>
+                <button mat-button type="button" (click)="discardLogo()"><mat-icon>delete</mat-icon>Quitar</button>
               }
             }
           </div>

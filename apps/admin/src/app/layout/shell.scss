@@ -64,14 +64,26 @@
     background: var(--os-color-surface-raised);
     font-weight: 600;
   }
+
+  .mat-icon {
+    flex: none;
+    color: var(--os-color-text-muted);
+  }
+
+  // La sección en la que estás: icono relleno y del color del texto.
+  &.active .mat-icon {
+    color: var(--os-color-text);
+    font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+  }
 }
 
+// Marca de la tienda: sus dos colores en diagonal.
 .mark {
   flex: none;
   width: 10px;
   height: 10px;
   border-radius: 2px;
-  background: var(--mark);
+  background: linear-gradient(135deg, var(--mark) 50%, var(--mark-2, var(--mark)) 50%);
 }
 
 .store-name {
@@ -136,6 +148,9 @@
   }
 
   .menu-button {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--os-space-1);
     padding: 6px var(--os-space-3);
     border: 1px solid var(--os-color-line);
     border-radius: var(--os-radius-field);

@@ -15,6 +15,8 @@ const pendingSection: Loader = () =>
 
 /** Secciones de tienda ya construidas; las demás muestran el aviso de pendiente. */
 const SECTION_PAGES: Record<string, Loader> = {
+  categorias: () =>
+    import('./store/categories/categories-page').then((m) => m.CategoriesPage),
   apariencia: () =>
     import('./store/appearance/appearance-page').then((m) => m.AppearancePage),
   dominios: () =>

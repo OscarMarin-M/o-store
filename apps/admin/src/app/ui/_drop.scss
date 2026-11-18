@@ -1,0 +1,58 @@
+// Zona para soltar, pegar o elegir archivos (logo, fotos, diseños).
+// Es un <label class="os-drop"> con el <input type="file"> dentro, así el clic y el
+// teclado abren el selector sin código extra. Lleva un icono y dos líneas de texto:
+//
+//   <label class="os-drop" [class.dragging]="…">
+//     <input type="file" … />
+//     <mat-icon class="os-drop-icon" aria-hidden="true">upload</mat-icon>
+//     <span>Arrastra aquí o <u>elige un archivo</u></span>
+//     <span class="os-muted">PNG o JPG, hasta 2 MB.</span>
+//   </label>
+
+.os-drop {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 2px var(--os-space-3);
+  padding: var(--os-space-4);
+  border: 1px dashed var(--os-color-line);
+  border-radius: var(--os-radius-field);
+  cursor: pointer;
+  transition: border-color 120ms ease, background-color 120ms ease;
+
+  &.dragging,
+  &:hover {
+    border-color: var(--os-color-accent);
+    background: var(--os-color-surface-raised);
+  }
+
+  &:focus-within {
+    outline: 2px solid var(--os-color-focus);
+    outline-offset: 2px;
+  }
+
+  input[type='file'] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+  }
+
+  .os-muted {
+    font-size: var(--os-text-sm);
+  }
+}
+
+.os-drop-icon.mat-icon.material-symbols-outlined {
+  grid-row: span 2;
+  width: 32px;
+  height: 32px;
+  font-size: 32px;
+  color: var(--os-color-text-muted);
+  font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 40;
+
+  .os-drop.dragging &,
+  .os-drop:hover & {
+    color: var(--os-color-text);
+  }
+}

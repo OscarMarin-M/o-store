@@ -18,6 +18,7 @@ import type {
   UpdateDomainInput,
   UpdateStoreInput,
 } from '@o-stores/contracts';
+import { DEFAULT_STORE_PRIMARY, similarShade } from '@o-stores/contracts';
 import type { Selectable } from 'kysely';
 import { MembershipLookup } from '../auth/membership-lookup';
 import { isUniqueViolation } from '../common/pg-errors';
@@ -90,6 +91,9 @@ export class StoresService {
             slug: input.slug,
             modules: input.modules,
             schemaName,
+            // El valor por defecto de la base es ámbar, reservado en el admin: se manda siempre.
+            colorPrimary: input.colorPrimary ?? DEFAULT_STORE_PRIMARY,
+            colorAccent: input.colorAccent ?? similarShade(input.colorPrimary ?? DEFAULT_STORE_PRIMARY),
           })
           .returningAll()
           .executeTakeFirstOrThrow();
