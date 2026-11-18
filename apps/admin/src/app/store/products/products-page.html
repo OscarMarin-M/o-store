@@ -7,70 +7,77 @@
     </a>
   </header>
 
-  <div class="toolbar">
+  <div class="os-list-toolbar">
     <os-field class="search" label="Buscar productos" labelHidden icon="search">
       <input
         osControl
         type="search"
         placeholder="Buscar por nombre o código"
-        (input)="onSearch($any($event.target).value)"
+        [value]="list.q()"
+        (input)="list.search($any($event.target).value)"
       />
     </os-field>
     @if (categories().length) {
       <os-field class="category" label="Filtrar por categoría" labelHidden icon="category">
-        <select osControl [value]="category()" (change)="setCategory($any($event.target).value)">
-          <option value="">Todas las categorías</option>
+        @let category = list.filters().categoria;
+        <select osControl (change)="list.setFilter('categoria', $any($event.target).value)">
+          <option value="" [selected]="!category">Todas las categorías</option>
           @for (c of categoryTree(); track c.id) {
-            <option [value]="c.id" [selected]="category() === c.id">{{ c.name }}</option>
+            <option [value]="c.id" [selected]="category === c.id">{{ c.name }}</option>
             @for (s of c.children; track s.id) {
-              <option [value]="s.id" [selected]="category() === s.id">{{ c.name }} › {{ s.name }}</option>
+              <option [value]="s.id" [selected]="category === s.id">{{ c.name }} › {{ s.name }}</option>
             }
           }
-          <option value="none" [selected]="category() === 'none'">Sin categoría</option>
+          <option value="none" [selected]="category === 'none'">Sin categoría</option>
         </select>
       </os-field>
     }
-    <div class="filters" role="group" aria-label="Filtrar por estado">
+    <div class="os-segmented" role="group" aria-label="Filtrar por estado">
       @for (f of filters; track f.value) {
-        <button type="button" class="filter" [class.on]="filter() === f.value" [attr.aria-pressed]="filter() === f.value" (click)="setFilter(f.value)">
+        <button
+          type="button"
+          [attr.aria-pressed]="list.filters().estado === f.value"
+          (click)="list.setFilter('estado', f.value)"
+        >
           {{ f.label }}
         </button>
       }
     </div>
   </div>
 
-  @switch (status()) {
+  @switch (products.status()) {
     @case ('error') {
       <os-notice kind="error">
         No se pudieron cargar los productos.
-        <button mat-button type="button" (click)="retry()"><mat-icon>refresh</mat-icon>Reintentar</button>
+        <button mat-button type="button" (click)="products.reload()"><mat-icon>refresh</mat-icon>Reintentar</button>
       </os-notice>
     }
     @default {
-      @if (data(); as d) {
+      @if (products.data(); as d) {
         @if (d.items.length) {
-          <div class="os-panel table-wrap" [attr.aria-busy]="status() === 'loading'">
-            <table>
+          <div class="os-panel os-table-wrap" [attr.aria-busy]="products.status() === 'loading'">
+            <table class="os-table">
               <thead>
                 <tr>
                   <th scope="col"><span class="visually-hidden">Foto</span></th>
-                  <th scope="col">Producto</th>
+                  <th osSort="name" [list]="list">Producto</th>
                   <th scope="col">Estado</th>
-                  <th scope="col" class="num">Precio</th>
-                  <th scope="col" class="num">Stock</th>
+                  <th scope="col" class="os-num">Precio</th>
+                  <th osSort="stock" [list]="list" class="os-num">Stock</th>
+                  <th osSort="updatedAt" [list]="list" class="os-num">Modificado</th>
                 </tr>
               </thead>
               <tbody>
                 @for (p of d.items; track p.id) {
-                  <tr (click)="open(p.id)">
-                    <td class="thumb">
+                  <tr data-link (click)="open(p.id)">
+                    <td class="os-cell-media thumb">
                       @if (p.coverUrl) {
                         <img [src]="p.coverUrl" alt="" loading="lazy" />
                       } @else {
                         <span class="no-photo" aria-hidden="true"></span>
                       }
                     </td>
-                    <td class="product">
+                    <td class="os-cell-main product">
                       <a [routerLink]="['/tienda', store.id, 'productos', p.id]" (click)="$event.stopPropagation()">{{ p.name }}</a>
                       <span class="os-mono os-muted">
                         {{ p.code }}@if (p.variantCount) {, {{ p.variantCount }} variantes}
@@ -80,35 +87,31 @@
                       }
                     </td>
                     <td><span class="state" [attr.data-status]="p.status">{{ statusLabels[p.status] }}</span></td>
-                    <td class="num">{{ money(p.price, p.priceCurrency) }}</td>
-                    <td class="num" [class.out]="p.totalStock === 0">{{ p.totalStock === 0 ? 'Agotado' : p.totalStock }}</td>
+                    <td class="os-num">{{ money(p.price, p.priceCurrency) }}</td>
+                    <td class="os-num" data-label="Stock" [class.out]="p.totalStock === 0">
+                      {{ p.totalStock === 0 ? 'Agotado' : p.totalStock }}
+                    </td>
+                    <td class="os-num os-muted" data-label="Modificado">{{ day(p.updatedAt) }}</td>
                   </tr>
                 }
               </tbody>
             </table>
           </div>
-
-          @if (pages() > 1) {
-            <nav class="pager" aria-label="Páginas">
-              <button mat-button type="button" [disabled]="page() === 1" (click)="page.set(page() - 1)">Anterior</button>
-              <span class="os-muted">Página {{ page() }} de {{ pages() }}</span>
-              <button mat-button type="button" [disabled]="page() === pages()" (click)="page.set(page() + 1)">Siguiente</button>
-            </nav>
-          }
-        } @else if (search()) {
-          <p class="os-muted">Ningún producto coincide con «{{ search() }}».</p>
-        } @else if (category()) {
-          <p class="os-muted">
-            No hay productos en esta categoría con este estado.
-            <button mat-button type="button" (click)="setCategory('')">Ver todas las categorías</button>
-          </p>
-        } @else if (filter() === 'current') {
+          <os-pager [list]="list" [data]="d" noun="productos" />
+        } @else if (list.filtered()) {
+          <div class="empty">
+            @if (list.q()) {
+              <p>Ningún producto coincide con «{{ list.q() }}» con estos filtros.</p>
+            } @else {
+              <p>No hay productos con estos filtros.</p>
+            }
+            <button mat-button type="button" (click)="list.clearFilters()"><mat-icon>filter_alt_off</mat-icon>Quitar filtros</button>
+          </div>
+        } @else {
           <div class="empty">
             <p>Aún no hay productos en {{ store.name }}.</p>
             <a mat-button [routerLink]="['/tienda', store.id, 'productos', 'nuevo']"><mat-icon>add</mat-icon>Crear el primero</a>
           </div>
-        } @else {
-          <p class="os-muted">No hay productos con este estado.</p>
         }
       } @else {
         <p class="os-muted">Cargando productos…</p>

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { reservedColorIssue } from './colors';
+import { listQuerySchema, type Page } from './lists';
 
 // ---- Roles ----
 
@@ -250,12 +251,17 @@ export const productInputSchema = z
   });
 export type ProductInput = z.infer<typeof productInputSchema>;
 
-export const productListQuerySchema = z.object({
-  q: z.string().trim().max(100).optional(),
+/** Campos por los que se puede ordenar la lista de productos. */
+export const PRODUCT_SORTS = ['updatedAt', 'name', 'code', 'stock'] as const;
+export type ProductSort = (typeof PRODUCT_SORTS)[number];
+
+export const productListQuerySchema = listQuerySchema(PRODUCT_SORTS, {
+  sort: 'updatedAt',
+  dir: 'desc',
+}).extend({
   status: z.enum(PRODUCT_STATUSES).optional(),
   /** Id de categoría (incluye sus subcategorías) o 'none' para los que no tienen. */
   categoryId: z.union([z.uuid(), z.literal('none')]).optional(),
-  page: z.coerce.number().int().min(1).default(1),
 });
 export type ProductListQuery = z.infer<typeof productListQuerySchema>;
 
@@ -326,12 +332,7 @@ export interface ProductListItemDto {
   updatedAt: string;
 }
 
-export interface ProductListDto {
-  items: ProductListItemDto[];
-  total: number;
-  page: number;
-  pageSize: number;
-}
+export type ProductListDto = Page<ProductListItemDto>;
 
 export interface ProductImageUploadDto {
   path: string;
@@ -386,3 +387,4 @@ export interface CategoryDto {
 }
 export * from './codes';
 export * from './colors';
+export * from './lists';

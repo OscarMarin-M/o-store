@@ -18,14 +18,13 @@ import type {
 } from '@o-stores/contracts';
 import { sql, type Selectable, type Transaction } from 'kysely';
 import { randomUUID } from 'node:crypto';
+import { paginate } from '../common/paginate';
 import { isForeignKeyViolation, isUniqueViolation } from '../common/pg-errors';
 import { AppConfig, STORE_ASSETS_BUCKET } from '../config/app-config';
 import { SUPABASE_ADMIN, type SupabaseAdmin } from '../database/database.module';
 import type { ProductVariantsTable, ProductsTable, TenantDB } from '../database/types';
 import { productCode, productSlug, variantCode } from '@o-stores/contracts';
 import { TenantDbService, type Tenant } from './tenant-db.service';
-
-const PAGE_SIZE = 50;
 
 type ProductRow = Selectable<ProductsTable>;
 type VariantRow = Selectable<ProductVariantsTable>;
@@ -63,7 +62,7 @@ export class ProductsService {
   // ---- Productos ----
 
   async list(storeId: string, query: ProductListQuery): Promise<ProductListDto> {
-    const { db } = await this.tenants.forStore(storeId);
+    const { db, schema } = await this.tenants.forStore(storeId);
     let base = db.selectFrom('products as p');
     if (query.status) {
       base = base.where('p.status', '=', query.status);
@@ -72,9 +71,13 @@ export class ProductsService {
       base = base.where('p.status', '!=', 'archived');
     }
     if (query.q) {
+      // search_text (migración tenant 0003) quita tildes y mayúsculas: "polera nandu"
+      // encuentra "Polera Ñandú". La expresión es la misma del índice de trigramas,
+      // así Postgres lo usa en vez de recorrer toda la tabla.
+      const searchText = sql.id(schema, 'search_text');
       const term = `%${query.q.replace(/[%_\\]/g, '\\$&')}%`;
-      base = base.where((eb) =>
-        eb.or([eb('p.name', 'ilike', term), eb('p.code', 'ilike', term)]),
+      base = base.where(
+        sql<boolean>`${searchText}(${sql.ref('p.name')} || ' ' || ${sql.ref('p.code')}) like ${searchText}(${term})`,
       );
     }
     if (query.categoryId === 'none') {
@@ -90,60 +93,62 @@ export class ProductsService {
       );
     }
 
-    const [{ total }, rows] = await Promise.all([
-      base.select((eb) => eb.fn.countAll<string>().as('total')).executeTakeFirstOrThrow(),
-      base
-        .select([
-          'p.id',
-          'p.code',
-          'p.name',
-          'p.status',
-          'p.price',
-          'p.priceCurrency',
-          'p.stock',
-          'p.images',
-          'p.categoryId',
-          'p.updatedAt',
-        ])
-        .select((eb) => [
-          eb
-            .selectFrom('productVariants as v')
-            .whereRef('v.productId', '=', 'p.id')
-            .select(eb.fn.countAll<string>().as('n'))
-            .as('variantCount'),
-          eb
-            .selectFrom('productVariants as v')
-            .whereRef('v.productId', '=', 'p.id')
-            .select(sql<string>`coalesce(sum(v.stock), 0)`.as('s'))
-            .as('variantStock'),
-        ])
-        .orderBy('p.updatedAt', 'desc')
-        .limit(PAGE_SIZE)
-        .offset((query.page - 1) * PAGE_SIZE)
-        .execute(),
-    ]);
-
-    return {
-      items: rows.map((r) => {
-        const variantCount = Number(r.variantCount ?? 0);
-        return {
-          id: r.id,
-          code: r.code,
-          name: r.name,
-          status: r.status,
-          price: Number(r.price),
-          priceCurrency: r.priceCurrency,
-          totalStock: variantCount ? Number(r.variantStock ?? 0) : r.stock,
-          variantCount,
-          categoryId: r.categoryId,
-          coverUrl: this.config.publicAssetUrl(r.images[0] ?? null),
-          updatedAt: r.updatedAt.toISOString(),
-        };
+    return paginate(
+      base,
+      (qb) =>
+        qb
+          .select([
+            'p.id',
+            'p.code',
+            'p.name',
+            'p.status',
+            'p.price',
+            'p.priceCurrency',
+            'p.images',
+            'p.categoryId',
+            'p.updatedAt',
+          ])
+          .select((eb) => [
+            eb
+              .selectFrom('productVariants as v')
+              .whereRef('v.productId', '=', 'p.id')
+              .select(eb.fn.countAll<string>().as('n'))
+              .as('variantCount'),
+            // Con variantes, el stock es la suma de las variantes.
+            sql<number>`coalesce(
+              (select sum(v.stock) from ${sql.table(`${schema}.product_variants`)} v where v.product_id = p.id),
+              p.stock
+            )::int`.as('totalStock'),
+          ])
+          .$call((q) => {
+            switch (query.sort) {
+              case 'name':
+                return q.orderBy(sql`lower(${sql.ref('p.name')})`, query.dir);
+              case 'code':
+                return q.orderBy('p.code', query.dir);
+              case 'stock':
+                return q.orderBy('totalStock', query.dir);
+              default:
+                return q.orderBy('p.updatedAt', query.dir);
+            }
+          })
+          // Desempate estable entre páginas (ver paginate).
+          .orderBy('p.id'),
+      query,
+      (r) => ({
+        id: r.id,
+        code: r.code,
+        name: r.name,
+        status: r.status,
+        price: Number(r.price),
+        priceCurrency: r.priceCurrency,
+        totalStock: Number(r.totalStock),
+        variantCount: Number(r.variantCount ?? 0),
+        categoryId: r.categoryId,
+        coverUrl: this.config.publicAssetUrl(r.images[0] ?? null),
+        updatedAt: r.updatedAt.toISOString(),
       }),
-      total: Number(total),
-      page: query.page,
-      pageSize: PAGE_SIZE,
-    };
+    );
   }
 
   async get(storeId: string, productId: string): Promise<ProductDto> {

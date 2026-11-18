@@ -1,0 +1,224 @@
+// Listas del admin: tabla, encabezados que ordenan, paginador y barra de filtros.
+//
+// <div class="os-table-wrap os-panel" [attr.aria-busy]="...">
+//   <table class="os-table">
+//     <th osSort="name" [list]="list">Producto</th>
+//     <td class="os-cell-media">  foto, a la izquierda también en móvil
+//     <td class="os-cell-main">   lo principal, ocupa la fila entera en móvil
+//     <td data-label="Precio" class="os-num">  en móvil se muestra "Precio" delante
+//
+// En un contenedor estrecho (móvil) cada fila pasa a ser una tarjeta, sin scroll
+// horizontal.
+
+.os-list-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--os-space-3);
+  align-items: center;
+  margin-bottom: var(--os-space-4);
+}
+
+// Filtros de un clic (estado de un producto, de un pedido…).
+.os-segmented {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--os-space-1);
+
+  button {
+    padding: 6px var(--os-space-3);
+    border: 1px solid var(--os-color-line);
+    border-radius: var(--os-radius-field);
+    background: none;
+    color: var(--os-color-text-muted);
+    font: inherit;
+    cursor: pointer;
+
+    &:hover {
+      color: var(--os-color-text);
+    }
+
+    &[aria-pressed='true'] {
+      border-color: var(--os-color-text);
+      color: var(--os-color-text);
+      font-weight: 600;
+    }
+  }
+}
+
+.os-table-wrap {
+  container-type: inline-size;
+  overflow-x: auto;
+  transition: opacity 120ms;
+
+  // Mientras llega la página nueva se ve la anterior, atenuada.
+  &[aria-busy='true'] {
+    opacity: 0.6;
+  }
+}
+
+.os-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: var(--os-space-2) var(--os-space-4);
+    border-bottom: 1px solid var(--os-color-line);
+    text-align: left;
+    vertical-align: middle;
+  }
+
+  th {
+    font-size: var(--os-text-sm);
+    font-weight: 600;
+    color: var(--os-color-text-muted);
+    white-space: nowrap;
+  }
+
+  tbody tr {
+    &:hover {
+      background: var(--os-color-surface-raised);
+    }
+
+    &:last-child td {
+      border-bottom: 0;
+    }
+  }
+
+  // Filas que abren el detalle al pulsarlas.
+  tbody tr[data-link] {
+    cursor: pointer;
+  }
+
+  .os-num {
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  th.os-num .os-sort {
+    flex-direction: row-reverse;
+  }
+}
+
+// Botón dentro de un encabezado que ordena (OsSortHeader).
+.os-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin: -4px -6px;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: var(--os-radius-field);
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+
+  .mat-icon {
+    opacity: 0.45;
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+
+  &:hover {
+    color: var(--os-color-text);
+    background: var(--os-color-surface-raised);
+
+    .mat-icon {
+      opacity: 1;
+    }
+  }
+}
+
+th.os-sorted {
+  color: var(--os-color-text);
+
+  .os-sort .mat-icon {
+    opacity: 1;
+  }
+}
+
+@container (max-width: 560px) {
+  .os-table {
+    thead {
+      // Los encabezados siguen ahí para lectores de pantalla.
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+    }
+
+    tbody tr {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--os-space-1) var(--os-space-4);
+      padding: var(--os-space-3) var(--os-space-4);
+      border-bottom: 1px solid var(--os-color-line);
+
+      &:last-child {
+        border-bottom: 0;
+      }
+    }
+
+    td {
+      padding: 0;
+      border: 0;
+    }
+
+    .os-cell-media {
+      order: -2;
+    }
+
+    .os-cell-main {
+      order: -1;
+      flex: 1 1 calc(100% - 72px);
+      min-width: 0;
+    }
+
+    td.os-num {
+      text-align: left;
+    }
+
+    td[data-label]::before {
+      content: attr(data-label) ' ';
+      color: var(--os-color-text-muted);
+      font-size: var(--os-text-sm);
+    }
+  }
+}
+
+.os-pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--os-space-2) var(--os-space-5);
+  margin-top: var(--os-space-3);
+  font-size: var(--os-text-sm);
+}
+
+.os-pager-range {
+  color: var(--os-color-text-muted);
+}
+
+.os-pager-size {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--os-space-2);
+  color: var(--os-color-text-muted);
+
+  .os-control {
+    width: auto;
+    min-width: 72px;
+    height: 32px;
+  }
+}
+
+.os-pager-steps {
+  display: flex;
+  align-items: center;
+  gap: var(--os-space-2);
+  margin-left: auto;
+}
