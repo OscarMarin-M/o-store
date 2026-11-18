@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../core/auth.service';
 import { OS_UI } from '../ui/ui';
 
@@ -13,6 +13,10 @@ import { OS_UI } from '../ui/ui';
     <main class="login">
       <form class="os-panel form" (ngSubmit)="submit()">
         <h1>Entrar a O-stores</h1>
+
+        @if (auth.expired()) {
+          <os-notice kind="info">Tu sesión venció. Vuelve a entrar para seguir donde estabas.</os-notice>
+        }
 
         @if (auth.unavailable()) {
           <os-notice kind="error">
@@ -68,6 +72,7 @@ import { OS_UI } from '../ui/ui';
 export class LoginPage {
   protected readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   protected email = '';
   protected password = '';
@@ -81,7 +86,7 @@ export class LoginPage {
     await this.auth.init();
     this.retrying.set(false);
     // Si había una sesión guardada, ya se puede entrar directamente.
-    if (this.auth.me()) await this.router.navigateByUrl('/');
+    if (this.auth.me()) await this.router.navigateByUrl(this.returnUrl());
   }
 
   protected async submit(): Promise<void> {
@@ -94,6 +99,12 @@ export class LoginPage {
     const message = await this.auth.signIn(this.email.trim(), this.password);
     this.busy.set(false);
     if (message) this.error.set(message);
-    else await this.router.navigateByUrl('/');
+    else await this.router.navigateByUrl(this.returnUrl());
+  }
+
+  /** Página a la que volver tras entrar; solo rutas internas, para no salir a otro sitio. */
+  private returnUrl(): string {
+    const volver = this.route.snapshot.queryParamMap.get('volver') ?? '';
+    return volver.startsWith('/') && !volver.startsWith('//') && !volver.startsWith('/entrar') ? volver : '/';
   }
 }

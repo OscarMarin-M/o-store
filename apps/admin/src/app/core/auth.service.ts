@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import type { ClientConfigDto, MeDto, Role } from '@o-stores/contracts';
 import {
@@ -6,6 +6,7 @@ import {
   type Session,
   type SupabaseClient,
 } from '@supabase/supabase-js';
+import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
 /**
@@ -15,12 +16,16 @@ import { firstValueFrom } from 'rxjs';
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
   private client: SupabaseClient | null = null;
+  private refreshing: Promise<string | null> | null = null;
 
   readonly session = signal<Session | null>(null);
   readonly me = signal<MeDto | null>(null);
   /** true si la API no respondió al arrancar. */
   readonly unavailable = signal(false);
+  /** true si se cerró la sesión porque venció; la página de entrar lo avisa. */
+  readonly expired = signal(false);
   readonly isSuperAdmin = computed(() => this.me()?.isSuperAdmin ?? false);
 
   /** Se ejecuta una vez al arrancar la app (provideAppInitializer). */
@@ -42,8 +47,14 @@ export class AuthService {
         if (!session) this.me.set(null);
       });
       if (data.session) await this.loadMe();
-    } catch {
-      this.unavailable.set(true);
+    } catch (error) {
+      if (error instanceof HttpErrorResponse && error.status === 401) {
+        // La sesión guardada ya no vale: se entra de nuevo, no es que falte la API.
+        await this.client?.auth.signOut({ scope: 'local' });
+        this.session.set(null);
+      } else {
+        this.unavailable.set(true);
+      }
     }
   }
 
@@ -65,7 +76,38 @@ export class AuthService {
     }
     this.session.set(data.session);
     await this.loadMe();
+    this.expired.set(false);
     return null;
+  }
+
+  /**
+   * Pide a Supabase un token nuevo. Si varias peticiones reciben 401 a la vez,
+   * comparten la misma renovación. Devuelve el token o null si no se pudo.
+   */
+  refresh(): Promise<string | null> {
+    if (!this.client) return Promise.resolve(null);
+    this.refreshing ??= this.client.auth
+      .refreshSession()
+      .then(({ data, error }) => {
+        if (error || !data.session) return null;
+        this.session.set(data.session);
+        return data.session.access_token;
+      })
+      .catch(() => null)
+      .finally(() => (this.refreshing = null));
+    return this.refreshing;
+  }
+
+  /** La sesión venció en medio del trabajo: la cierra y lleva a entrar, recordando dónde estaba. */
+  expire(): void {
+    // Sin `me` no se había entrado (o ya se está saliendo): nada que redirigir.
+    if (!this.me()) return;
+    const volver = this.router.url;
+    this.me.set(null);
+    this.session.set(null);
+    this.expired.set(true);
+    void this.client?.auth.signOut({ scope: 'local' });
+    void this.router.navigate(['/entrar'], { queryParams: { volver } });
   }
 
   async signOut(): Promise<void> {
