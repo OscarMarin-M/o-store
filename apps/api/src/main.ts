@@ -2,6 +2,7 @@ import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { existsSync } from 'node:fs';
 import { AppModule } from './app/app.module';
+import { ApiExceptionFilter } from './common/api-exception.filter';
 import { runCli } from './cli';
 
 // Nx ya carga .env al usar `nx serve`; esto cubre ejecutar el bundle directo con node.
@@ -17,6 +18,8 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const globalPrefix = 'api';
   app.setGlobalPrefix(globalPrefix);
+  // Todas las respuestas de error salen con el formato ApiError de @o-stores/contracts.
+  app.useGlobalFilters(new ApiExceptionFilter());
   app.enableShutdownHooks();
   const port = process.env.PORT || 3000;
   await app.listen(port);

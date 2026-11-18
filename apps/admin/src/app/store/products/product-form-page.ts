@@ -20,8 +20,9 @@ import {
   type ExchangeRateDto,
   type ProductDto,
   type ProductStatus,
+  issuesToFields,
 } from '@o-stores/contracts';
-import { apiMessage } from '../../core/api-error';
+import { apiFields, apiMessage, formErrors } from '../../core/api-error';
 import { ConfirmService } from '../../core/confirm.service';
 import { CURRENCY_LABELS, convert, formatMoney } from '../../core/money';
 import { StoresService } from '../../core/stores.service';
@@ -52,6 +53,9 @@ function combinations(lists: string[][]): string[][] {
     [[]],
   );
 }
+
+/** Campos del formulario que muestran su propio error; el resto va al aviso general. */
+const PRODUCT_FIELDS = ['name', 'code', 'price', 'stock', 'optionNames', 'variants'] as const;
 
 @Component({
   selector: 'os-product-form-page',
@@ -223,13 +227,7 @@ export class ProductFormPage {
     const input = this.buildInput();
     const parsed = productInputSchema.safeParse(input);
     if (!parsed.success) {
-      const errors: Record<string, string> = {};
-      for (const issue of parsed.error.issues) {
-        const key = issue.path.slice(0, 2).join('.');
-        errors[key] ??= issue.message;
-      }
-      this.errors.set(errors);
-      this.message.set({ kind: 'error', text: 'Revisa los campos marcados.' });
+      this.showErrors(issuesToFields(parsed.error.issues, 1));
       return;
     }
     if (this.tooManyVariants()) {
@@ -250,10 +248,21 @@ export class ProductFormPage {
         await this.router.navigate(['/tienda', store.id, 'productos', saved.id], { replaceUrl: true });
       }
     } catch (error) {
-      this.message.set({ kind: 'error', text: apiMessage(error, 'No se pudo guardar el producto. Inténtalo de nuevo.') });
+      const fields = apiFields(error, 1);
+      if (Object.keys(fields).length) this.showErrors(fields);
+      else this.message.set({ kind: 'error', text: apiMessage(error, 'No se pudo guardar el producto. Inténtalo de nuevo.') });
     } finally {
       this.saving.set(false);
     }
+  }
+
+  /** Marca cada error junto a su campo; los de campos sin hueco propio van al aviso general. */
+  private showErrors(fields: Record<string, string>): void {
+    const { form, ...shown } = formErrors(fields, PRODUCT_FIELDS);
+    this.errors.set(shown);
+    const marked = Object.keys(shown).length > 0;
+    const text = form ? (marked ? `${form}. Revisa también los campos marcados.` : `${form}.`) : 'Revisa los campos marcados.';
+    this.message.set({ kind: 'error', text });
   }
 
   protected async changeStatus(status: ProductStatus): Promise<void> {

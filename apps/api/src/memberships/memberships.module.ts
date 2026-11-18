@@ -22,6 +22,7 @@ import {
   type MemberDto,
   type StoreRole,
   type UpdateMemberInput,
+  fieldError,
 } from '@o-stores/contracts';
 import { sql } from 'kysely';
 import { Roles } from '../auth/decorators';
@@ -87,7 +88,7 @@ export class MembershipsService {
       };
     } catch (error) {
       if (isUniqueViolation(error)) {
-        throw new ConflictException('Ese usuario ya pertenece a la tienda');
+        throw new ConflictException(fieldError('email', 'Ese usuario ya pertenece a la tienda'));
       }
       throw error;
     }

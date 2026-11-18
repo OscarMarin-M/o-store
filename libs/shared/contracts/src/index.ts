@@ -388,3 +388,4 @@ export interface CategoryDto {
 export * from './codes';
 export * from './colors';
 export * from './lists';
+export * from './errors';

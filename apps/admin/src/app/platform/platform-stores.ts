@@ -1,4 +1,3 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -17,6 +16,7 @@ import {
   type StoreDto,
   type StoreModule,
 } from '@o-stores/contracts';
+import { apiFields, apiMessage, formErrors } from '../core/api-error';
 import { ConfirmService } from '../core/confirm.service';
 import { StoresService } from '../core/stores.service';
 import { OS_UI } from '../ui/ui';
@@ -30,6 +30,9 @@ const MODULE_HINTS: Record<StoreModule, string> = {
   tcg: 'Datos de carta: edición, rareza, estado e idioma.',
   apparel: 'Tallas, colores y diseños que sube el cliente.',
 };
+
+/** Campos del formulario de creación que muestran su propio error. */
+const CREATE_FIELDS = ['name', 'slug', 'colorPrimary', 'colorAccent'] as const;
 
 @Component({
   selector: 'os-platform-stores',
@@ -47,9 +50,7 @@ export class PlatformStores {
 
   protected readonly creating = signal(false);
   protected readonly saving = signal(false);
-  protected readonly errors = signal<
-    Partial<Record<'name' | 'slug' | 'colorPrimary' | 'colorAccent' | 'form', string>>
-  >({});
+  protected readonly errors = signal<Partial<Record<(typeof CREATE_FIELDS)[number] | 'form', string>>>({});
   protected readonly toggling = signal<string | null>(null);
 
   protected name = '';
@@ -130,10 +131,11 @@ export class PlatformStores {
       await this.stores.create(parsed.data);
       this.creating.set(false);
     } catch (error) {
+      const fields = formErrors(apiFields(error, 1), CREATE_FIELDS);
       this.errors.set(
-        error instanceof HttpErrorResponse && error.status === 409
-          ? { slug: 'Ya existe una tienda con esta dirección. Elige otra.' }
-          : { form: 'No se pudo crear la tienda. Inténtalo de nuevo.' },
+        Object.keys(fields).length
+          ? fields
+          : { form: apiMessage(error, 'No se pudo crear la tienda. Inténtalo de nuevo.') },
       );
     } finally {
       this.saving.set(false);
