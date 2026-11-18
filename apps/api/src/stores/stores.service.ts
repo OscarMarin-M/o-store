@@ -7,6 +7,7 @@ import {
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
+import { fieldError } from '@o-stores/contracts';
 import { resolveTxt } from 'node:dns/promises';
 import type {
   CreateDomainInput,
@@ -103,7 +104,7 @@ export class StoresService {
       return this.toDto(row);
     } catch (error) {
       if (isUniqueViolation(error)) {
-        throw new ConflictException('Ya existe una tienda con ese slug');
+        throw new ConflictException(fieldError('slug', 'Ya existe una tienda con esta dirección; elige otra'));
       }
       throw error;
     }
@@ -112,7 +113,7 @@ export class StoresService {
   async update(storeId: string, input: UpdateStoreInput): Promise<StoreDto> {
     if (input.logoPath && !input.logoPath.startsWith(`${storeId}/`)) {
       throw new BadRequestException(
-        'El logo debe estar en la carpeta de la tienda',
+        fieldError('logoPath', 'El logo debe estar en la carpeta de la tienda'),
       );
     }
     const row = await this.db
@@ -210,7 +211,7 @@ export class StoresService {
     await this.getRow(storeId);
     if (isPlatformDomain(input.domain, this.config.platformDomain)) {
       throw new BadRequestException(
-        'Los subdominios de la plataforma se asignan solos; añade aquí solo un dominio propio',
+        fieldError('domain', 'Los subdominios de la plataforma se asignan solos; añade aquí solo un dominio propio'),
       );
     }
     try {
@@ -231,7 +232,7 @@ export class StoresService {
       return toDomainDto(row, this.config.domainVerifySecret);
     } catch (error) {
       if (isUniqueViolation(error)) {
-        throw new ConflictException('Ese dominio ya está en uso');
+        throw new ConflictException(fieldError('domain', 'Ese dominio ya está en uso'));
       }
       throw error;
     }

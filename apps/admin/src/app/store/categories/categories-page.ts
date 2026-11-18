@@ -10,12 +10,11 @@ import {
   viewChild,
 } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
-import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { RouterLink } from '@angular/router';
-import { categoryInputSchema, slugify, type CategoryDto } from '@o-stores/contracts';
-import { apiMessage } from '../../core/api-error';
+import { categoryInputSchema, issuesToFields, slugify, type CategoryDto } from '@o-stores/contracts';
+import { apiFields, apiMessage, formErrors } from '../../core/api-error';
 import { ConfirmService } from '../../core/confirm.service';
 import { StoresService } from '../../core/stores.service';
 import { OS_UI } from '../../ui/ui';
@@ -30,6 +29,9 @@ interface Draft {
   /** Si la categoría tiene subcategorías no puede pasar a ser subcategoría. */
   hasChildren: boolean;
 }
+
+/** Campos del formulario que muestran su propio error; el resto va a `form`. */
+const CATEGORY_FIELDS = ['name', 'slug', 'parentId'] as const;
 
 @Component({
   selector: 'os-categories-page',
@@ -99,12 +101,7 @@ export class CategoriesPage {
       parentId: d.parentId,
     });
     if (!parsed.success) {
-      const errors: Record<string, string> = {};
-      for (const issue of parsed.error.issues) {
-        const key = String(issue.path[0] ?? 'form');
-        errors[key] ??= issue.message;
-      }
-      this.errors.set(errors);
+      this.errors.set(formErrors(issuesToFields(parsed.error.issues, 1), CATEGORY_FIELDS));
       return;
     }
     this.errors.set({});
@@ -117,10 +114,10 @@ export class CategoriesPage {
       this.draft.set(null);
       this.notice.set({ kind: 'ok', text: d.id ? `«${saved.name}» guardada.` : `«${saved.name}» creada.` });
     } catch (error) {
-      const text = apiMessage(error, 'No se pudo guardar la categoría.');
-      // Al guardar, la API solo responde 409 cuando la dirección ya existe.
-      const conflict = error instanceof HttpErrorResponse && error.status === 409;
-      this.errors.set(conflict ? { slug: text } : { form: text });
+      const fields = formErrors(apiFields(error, 1), CATEGORY_FIELDS);
+      this.errors.set(
+        Object.keys(fields).length ? fields : { form: apiMessage(error, 'No se pudo guardar la categoría.') },
+      );
     } finally {
       this.saving.set(false);
     }

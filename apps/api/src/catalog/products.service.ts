@@ -6,6 +6,7 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
+import { fieldError } from '@o-stores/contracts';
 import type {
   ProductDto,
   ProductImageUploadDto,
@@ -262,7 +263,7 @@ export class ProductsService {
         .executeTakeFirst();
       if (!taken) return code;
     }
-    throw new ConflictException('No se encontró un código libre; escribe uno a mano');
+    throw new ConflictException(fieldError('code', 'No se encontró un código libre; escribe uno a mano'));
   }
 
   /**
@@ -327,12 +328,12 @@ export class ProductsService {
         const constraint = (error as { constraint?: string }).constraint ?? '';
         throw new ConflictException(
           constraint.startsWith('product_variants')
-            ? 'Dos variantes producen el mismo código; cambia alguno de sus valores'
-            : `El código ${input.code ?? ''} ya lo usa otro producto; elige otro`,
+            ? fieldError('variants', 'Dos variantes producen el mismo código; cambia alguno de sus valores')
+            : fieldError('code', `El código ${input.code ?? ''} ya lo usa otro producto; elige otro`),
         );
       }
       if (isForeignKeyViolation(error)) {
-        throw new BadRequestException('La categoría elegida ya no existe; elige otra');
+        throw new BadRequestException(fieldError('categoryId', 'La categoría elegida ya no existe; elige otra'));
       }
       throw error;
     }
@@ -341,7 +342,7 @@ export class ProductsService {
   private checkImages(storeId: string, images: string[]): void {
     const prefix = `${storeId}/products/`;
     if (images.some((path) => !path.startsWith(prefix))) {
-      throw new BadRequestException('Alguna foto no pertenece a esta tienda');
+      throw new BadRequestException(fieldError('images', 'Alguna foto no pertenece a esta tienda'));
     }
   }
 

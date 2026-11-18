@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { slugify, type CategoryDto, type CategoryInput } from '@o-stores/contracts';
+import { slugify, type CategoryDto, type CategoryInput, fieldError } from '@o-stores/contracts';
 import { sql, type QueryCreator } from 'kysely';
 import { isUniqueViolation } from '../common/pg-errors';
 import type { TenantDB } from '../database/types';
@@ -142,18 +142,18 @@ export class CategoriesService {
 
   /** Solo dos niveles: el padre debe ser de primer nivel y `self` no puede tener hijas. */
   private async checkParent(db: Db, parentId: string, self: string | null): Promise<void> {
-    if (parentId === self) throw new BadRequestException('Una categoría no puede estar dentro de sí misma');
+    if (parentId === self) throw new BadRequestException(fieldError('parentId', 'Una categoría no puede estar dentro de sí misma'));
     const parent = await db
       .selectFrom('categories')
       .select('parentId')
       .where('id', '=', parentId)
       .executeTakeFirst();
-    if (!parent) throw new BadRequestException('La categoría superior ya no existe');
+    if (!parent) throw new BadRequestException(fieldError('parentId', 'La categoría superior ya no existe'));
     if (parent.parentId) {
-      throw new BadRequestException('Solo hay dos niveles: elige una categoría principal como superior');
+      throw new BadRequestException(fieldError('parentId', 'Solo hay dos niveles: elige una categoría principal como superior'));
     }
     if (self && (await this.hasChildren(db, self))) {
-      throw new BadRequestException('Tiene subcategorías, así que no puede ser subcategoría de otra');
+      throw new BadRequestException(fieldError('parentId', 'Tiene subcategorías, así que no puede ser subcategoría de otra'));
     }
   }
 
@@ -198,7 +198,7 @@ export class CategoriesService {
       return await work();
     } catch (error) {
       if (isUniqueViolation(error)) {
-        throw new ConflictException(`La dirección ${input.slug ?? ''} ya la usa otra categoría; elige otra`);
+        throw new ConflictException(fieldError('slug', `La dirección ${input.slug ?? ''} ya la usa otra categoría; elige otra`));
       }
       throw error;
     }
