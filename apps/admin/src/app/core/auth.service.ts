@@ -28,30 +28,36 @@ export class AuthService {
   readonly expired = signal(false);
   readonly isSuperAdmin = computed(() => this.me()?.isSuperAdmin ?? false);
 
-  /** Se ejecuta una vez al arrancar la app (provideAppInitializer). */
+  /**
+   * Se ejecuta al arrancar la app (provideAppInitializer) y en cada reintento del
+   * login mientras la API no responda. Se puede repetir: lo ya conseguido (cliente
+   * de Supabase) no se rehace, y lo que falló se vuelve a intentar.
+   */
   async init(): Promise<void> {
-    if (this.client) return;
-    this.unavailable.set(false);
     try {
-      const config = await firstValueFrom(
-        this.http.get<ClientConfigDto>('/api/public/config'),
-      );
-      this.client = createClient(
-        config.supabaseUrl,
-        config.supabasePublishableKey,
-      );
+      if (!this.client) {
+        const config = await firstValueFrom(
+          this.http.get<ClientConfigDto>('/api/public/config'),
+        );
+        this.client = createClient(
+          config.supabaseUrl,
+          config.supabasePublishableKey,
+        );
+        this.client.auth.onAuthStateChange((_event, session) => {
+          this.session.set(session);
+          if (!session) this.me.set(null);
+        });
+      }
       const { data } = await this.client.auth.getSession();
       this.session.set(data.session);
-      this.client.auth.onAuthStateChange((_event, session) => {
-        this.session.set(session);
-        if (!session) this.me.set(null);
-      });
-      if (data.session) await this.loadMe();
+      if (data.session && !this.me()) await this.loadMe();
+      this.unavailable.set(false);
     } catch (error) {
       if (error instanceof HttpErrorResponse && error.status === 401) {
         // La sesión guardada ya no vale: se entra de nuevo, no es que falte la API.
         await this.client?.auth.signOut({ scope: 'local' });
         this.session.set(null);
+        this.unavailable.set(false);
       } else {
         this.unavailable.set(true);
       }
@@ -64,7 +70,7 @@ export class AuthService {
 
   /** Devuelve un mensaje de error para mostrar, o null si entró. */
   async signIn(email: string, password: string): Promise<string | null> {
-    if (!this.client) return 'No hay conexión con el servidor. Revisa que la API esté encendida.';
+    if (!this.client) return 'La API todavía no responde. Espera unos segundos e inténtalo de nuevo.';
     const { data, error } = await this.client.auth.signInWithPassword({
       email,
       password,
