@@ -27,32 +27,6 @@
   font-size: var(--os-text-sm);
 }
 
-.table-wrap {
-  overflow-x: auto;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-th,
-td {
-  padding: var(--os-space-3) var(--os-space-4);
-  border-bottom: 1px solid var(--os-color-line);
-  text-align: left;
-  white-space: nowrap;
-}
-
-th {
-  font-size: var(--os-text-sm);
-  font-weight: 600;
-  color: var(--os-color-text-muted);
-}
-
-tbody tr:last-child td {
-  border-bottom: 0;
-}
 
 .store {
   display: inline-flex;

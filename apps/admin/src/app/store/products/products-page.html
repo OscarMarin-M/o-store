@@ -86,7 +86,7 @@
                         <span class="os-muted">{{ cat }}</span>
                       }
                     </td>
-                    <td><span class="state" [attr.data-status]="p.status">{{ statusLabels[p.status] }}</span></td>
+                    <td><os-badge [tone]="statusTones[p.status]">{{ statusLabels[p.status] }}</os-badge></td>
                     <td class="os-num">{{ money(p.price, p.priceCurrency) }}</td>
                     <td class="os-num" data-label="Stock" [class.out]="p.totalStock === 0">
                       {{ p.totalStock === 0 ? 'Agotado' : p.totalStock }}
@@ -99,19 +99,15 @@
           </div>
           <os-pager [list]="list" [data]="d" noun="productos" />
         } @else if (list.filtered()) {
-          <div class="empty">
-            @if (list.q()) {
-              <p>Ningún producto coincide con «{{ list.q() }}» con estos filtros.</p>
-            } @else {
-              <p>No hay productos con estos filtros.</p>
-            }
-            <button mat-button type="button" (click)="list.clearFilters()"><mat-icon>filter_alt_off</mat-icon>Quitar filtros</button>
-          </div>
+          <os-empty icon="search_off" [heading]="list.q() ? 'Ningún producto coincide con «' + list.q() + '»' : 'Ningún producto cumple estos filtros'">
+            Prueba con otras palabras o quita los filtros para ver todo el catálogo.
+            <button mat-button osEmptyAction type="button" (click)="list.clearFilters()"><mat-icon>filter_alt_off</mat-icon>Quitar filtros</button>
+          </os-empty>
         } @else {
-          <div class="empty">
-            <p>Aún no hay productos en {{ store.name }}.</p>
-            <a mat-button [routerLink]="['/tienda', store.id, 'productos', 'nuevo']"><mat-icon>add</mat-icon>Crear el primero</a>
-          </div>
+          <os-empty icon="inventory_2" [heading]="'Aún no hay productos en ' + store.name">
+            Se crean como borrador; publícalos cuando tengan foto y precio.
+            <a mat-button osEmptyAction [routerLink]="['/tienda', store.id, 'productos', 'nuevo']"><mat-icon>add</mat-icon>Crear el primero</a>
+          </os-empty>
         }
       } @else {
         <p class="os-muted">Cargando productos…</p>

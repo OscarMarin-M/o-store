@@ -12,6 +12,7 @@ import type {
   UpdateStoreSettingsInput,
 } from '@o-stores/contracts';
 import { firstValueFrom } from 'rxjs';
+import type { BadgeTone } from '../../ui/badge';
 
 /** Productos, ajustes de tienda y tipo de cambio. */
 @Injectable({ providedIn: 'root' })
@@ -68,6 +69,13 @@ export class ProductsApi {
     return `/api/stores/${storeId}/products`;
   }
 }
+
+/** Tono de la etiqueta de cada estado (os-badge). */
+export const STATUS_TONES: Record<ProductStatus, BadgeTone> = {
+  draft: 'neutral',
+  active: 'ok',
+  archived: 'neutral',
+};
 
 export const STATUS_LABELS: Record<ProductStatus, string> = {
   draft: 'Borrador',

@@ -44,9 +44,9 @@
       </div>
       <div class="tags">
         @if (platformIsPrimary()) {
-          <span class="tag primary">Principal</span>
+          <os-badge tone="store">Principal</os-badge>
         }
-        <span class="tag ok">Activo</span>
+        <os-badge tone="ok">Activo</os-badge>
       </div>
     </li>
 
@@ -69,11 +69,11 @@
             </div>
             <div class="tags">
               @if (domain.isPrimary && domain.verified) {
-                <span class="tag primary">Principal</span>
+                <os-badge tone="store">Principal</os-badge>
               }
-              <span class="tag" [class.ok]="domain.verified" [class.pending]="!domain.verified">
+              <os-badge [tone]="domain.verified ? 'ok' : 'warning'">
                 {{ domain.verified ? 'Verificado' : 'Pendiente de verificar' }}
-              </span>
+              </os-badge>
             </div>
             <div class="actions">
               @if (!domain.verified) {

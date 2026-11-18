@@ -15,7 +15,7 @@ import { formatDay } from '../../core/dates';
 import { formatMoney } from '../../core/money';
 import { StoresService } from '../../core/stores.service';
 import { OS_UI, injectListState, listData } from '../../ui/ui';
-import { ProductsApi, STATUS_LABELS } from './products-api';
+import { ProductsApi, STATUS_LABELS, STATUS_TONES } from './products-api';
 
 type Filter = 'current' | ProductStatus;
 
@@ -33,6 +33,7 @@ export class ProductsPage {
   private readonly stores = inject(StoresService);
   protected readonly store = computed(() => this.stores.active());
   protected readonly statusLabels = STATUS_LABELS;
+  protected readonly statusTones = STATUS_TONES;
   protected readonly money = formatMoney;
   protected readonly day = formatDay;
 
