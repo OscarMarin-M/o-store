@@ -51,25 +51,6 @@
   gap: var(--os-space-2);
 }
 
-.tag {
-  padding: 2px var(--os-space-2);
-  border: 1px solid var(--os-color-line);
-  border-radius: var(--os-radius-field);
-  font-size: var(--os-text-sm);
-
-  &.ok {
-    border-color: var(--os-color-success);
-    color: var(--os-color-success);
-  }
-
-  &.pending {
-    color: var(--os-color-text-muted);
-  }
-
-  &.primary {
-    border-color: var(--os-store-color);
-  }
-}
 
 .row-message,
 .steps {

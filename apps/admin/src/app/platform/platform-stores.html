@@ -78,8 +78,8 @@
   }
   @default {
     @if (stores.stores().length) {
-      <div class="os-panel table-wrap">
-        <table>
+      <div class="os-panel os-table-wrap">
+        <table class="os-table">
           <thead>
             <tr>
               <th scope="col">Tienda</th>
@@ -91,13 +91,13 @@
           <tbody>
             @for (store of stores.stores(); track store.id) {
               <tr>
-                <td>
+                <td class="os-cell-main">
                   <a class="store" [routerLink]="['/tienda', store.id]" [style.--mark]="store.colorPrimary" [style.--mark-2]="store.colorAccent">
                     <span class="mark" aria-hidden="true"></span>{{ store.name }}
                   </a>
                 </td>
-                <td class="os-mono">{{ store.slug }}</td>
-                <td class="os-muted">
+                <td class="os-mono" data-label="Dirección">{{ store.slug }}</td>
+                <td class="os-muted" data-label="Funciones">
                   @for (module of store.modules; track module; let last = $last) {
                     {{ moduleLabel(module) }}{{ last ? '' : ', ' }}
                   } @empty {
@@ -118,7 +118,10 @@
         </table>
       </div>
     } @else if (!creating()) {
-      <p class="os-muted">No hay tiendas todavía. Crea la primera con «Nueva tienda».</p>
+      <os-empty icon="storefront" heading="Todavía no hay tiendas">
+        Cada tienda tiene su catálogo, su dirección y sus colores.
+        <button mat-button osEmptyAction type="button" (click)="openForm()"><mat-icon>add</mat-icon>Crear la primera</button>
+      </os-empty>
     }
   }
 }

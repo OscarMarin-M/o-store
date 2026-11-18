@@ -97,10 +97,10 @@
           }
         </ul>
       } @else if (!draft()) {
-        <div class="empty">
-          <p>{{ store.name }} aún no tiene categorías.</p>
-          <button mat-button type="button" (click)="startCreate()"><mat-icon>add</mat-icon>Crear la primera</button>
-        </div>
+        <os-empty icon="category" [heading]="store.name + ' aún no tiene categorías'">
+          Agrupan los productos en el menú de la tienda. Ej.: Yu-Gi-Oh, con Sobres y Cartas sueltas dentro.
+          <button mat-button osEmptyAction type="button" (click)="startCreate()"><mat-icon>add</mat-icon>Crear la primera</button>
+        </os-empty>
       }
     }
   }

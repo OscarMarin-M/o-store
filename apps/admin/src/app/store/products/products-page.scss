@@ -42,20 +42,4 @@
   }
 }
 
-.state {
-  font-size: var(--os-text-sm);
-  white-space: nowrap;
 
-  &[data-status='active'] {
-    color: var(--os-color-success);
-  }
-
-  &[data-status='draft'],
-  &[data-status='archived'] {
-    color: var(--os-color-text-muted);
-  }
-}
-
-.empty p {
-  margin: 0 0 var(--os-space-2);
-}
