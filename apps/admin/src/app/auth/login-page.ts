@@ -1,9 +1,12 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../core/auth.service';
 import { OS_UI } from '../ui/ui';
+
+/** Cada cuánto se vuelve a probar la API mientras no responde. */
+const RETRY_MS = 3000;
 
 @Component({
   selector: 'os-login-page',
@@ -19,12 +22,13 @@ import { OS_UI } from '../ui/ui';
         }
 
         @if (auth.unavailable()) {
-          <os-notice kind="error">
-            No hay conexión con el servidor. Revisa que la API esté encendida (<span class="os-mono">npx nx serve api</span>).
+          <os-notice kind="warning">
+            La API no responde. Si acabas de arrancar, espera unos segundos: se reintenta sola.
+            Si sigue así, revisa la terminal de <span class="os-mono">npx nx serve admin</span>.
           </os-notice>
           <button mat-button type="button" [disabled]="retrying()" (click)="retry()">
             <mat-icon>refresh</mat-icon>
-            {{ retrying() ? 'Conectando…' : 'Reintentar' }}
+            {{ retrying() ? 'Conectando…' : 'Reintentar ahora' }}
           </button>
         }
 
@@ -81,7 +85,17 @@ export class LoginPage {
 
   protected readonly retrying = signal(false);
 
+  constructor() {
+    // Mientras la API no responda (p. ej. aún arrancando), reintenta cada pocos segundos.
+    effect((onCleanup) => {
+      if (!this.auth.unavailable()) return;
+      const timer = setInterval(() => void this.retry(), RETRY_MS);
+      onCleanup(() => clearInterval(timer));
+    });
+  }
+
   protected async retry(): Promise<void> {
+    if (this.retrying()) return;
     this.retrying.set(true);
     await this.auth.init();
     this.retrying.set(false);
